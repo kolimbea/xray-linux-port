@@ -7,7 +7,7 @@ cd "$(dirname "$0")/../monolith/src/$mod" || exit 1
 out=$(mktemp)
 for f in $(grep -o 'ClCompile Include="[^"]*"' *.vcxproj | sed 's/.*="//;s/"//;s#\\#/#g'); do
   case "$f" in blackbox/*|*borland*) continue;; esac
-  clang++ -std=c++20 -fsyntax-only -fms-extensions -w -ferror-limit=0 -DNDEBUG \
+  clang++ -std=c++20 -fsyntax-only -fms-extensions -fno-operator-names -w -ferror-limit=0 -DNDEBUG \
     -I. -I.. -I../../sdk/include -I"../3rd party" "$@" "$f" 2>&1 | grep 'error:' | sed "s#^#$f: #"
 done > "$out"
 echo "errors: $(wc -l < "$out")  files: $(cut -d: -f1 "$out" | sort -u | wc -l)"
