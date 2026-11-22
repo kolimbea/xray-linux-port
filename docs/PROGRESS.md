@@ -44,3 +44,9 @@
 
 ## Next — Stage 1b
 xrCDB, xrSound, xrPhysics (ODE), xrParticles, xrXMLParser, luajit + luabind.
+
+## Decision 2026-11-23 — own Vulkan renderer is the goal
+User changed the plan: final build uses `xrRender_VK` (Vulkan 1.3), no dxvk/D3D11. Chosen: skip the
+dxvk-native stage entirely; reference screenshots come from the existing Proton+DXVK GAMMA install,
+engine logic runs on a null backend until VK draws. Reasoning and revised stages/estimate in PLAN.md,
+render split and shader pipeline in ARCHITECTURE.md. Stage 1 (1b, 1c) is finished first.
