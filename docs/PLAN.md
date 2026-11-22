@@ -9,7 +9,7 @@ Module layout: [ARCHITECTURE.md](ARCHITECTURE.md).
 - Vulkan 1.4 on NVIDIA GTX 1650 Ti (proprietary driver), plus RADV Vega 8 and llvmpipe.
   Runs must pin the NVIDIA device (`DXVK_FILTER_DEVICE_NAME="GTX 1650"`).
 - gcc 16.2.1, clang 22.1.8, cmake 4.3.0, SDL3 3.4.20 devel installed.
-- Missing (need sudo): `openal-soft-devel`, `vkd3d-devel` (vkd3d-shader/utils).
+- Missing (need sudo): `openal-soft-devel`, `libvkd3d-shader-devel libvkd3d-utils-devel` (1.17).
 - dxvk-native: not packaged; build from source (meson) into `build/deps/` — user-local, no root.
 - GAMMA install (read-only): `~/Games/gamma/anomaly` (base), `~/Games/gamma/gamma` (MO2 mods).
   Tests use a flattened copy or overlayfs mount under `build/`, never the install itself.
