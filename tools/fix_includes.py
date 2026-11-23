@@ -70,14 +70,18 @@ def main():
                 if new != inc:
                     stats["slash"] += 1
                 if o == '"':
-                    for base in [dirpath] + roots:
-                        if os.path.exists(os.path.join(base, new)):
-                            break
-                        real = idx.resolve(base, new)
-                        if real:
-                            stats["case"] += 1
-                            new = real
-                            break
+                    # the including file's own module is searched first, as its vcxproj does
+                    rel = os.path.relpath(dirpath, src).split(os.sep)[0]
+                    own = [os.path.join(src, rel)] if rel not in (".", "3rd party") else []
+                    bases = [dirpath] + own + roots
+                    # an exact match anywhere means the include already works: keep it
+                    if not any(os.path.exists(os.path.join(b, new)) for b in bases):
+                        for base in bases:
+                            real = idx.resolve(base, new)
+                            if real:
+                                stats["case"] += 1
+                                new = real
+                                break
                 return f"{lead}{o}{new}{c}"
 
             out = INC.sub(fix, text)

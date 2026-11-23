@@ -32,7 +32,9 @@ def fix(t):
         inner = t[m.end(): end - 1]
         names = re.findall(r"\b(?:typename|class)\s+(\w+)", inner)
         # a name referenced again inside the list (e.g. by a default argument) must stay
-        if any(len(re.findall(r"\b%s\b" % n, inner)) > 1 for n in names):
+        def referenced(n):  # used other than in its own (or a nested) declaration
+            return len(re.findall(r"\b%s\b" % n, inner)) > len(re.findall(r"\b(?:typename|class)\s+%s\b" % n, inner))
+        if any(referenced(n) for n in names):
             continue
         new_inner = re.sub(r"\b(typename|class)\s+\w+", r"\1", inner)
         if new_inner != inner:
