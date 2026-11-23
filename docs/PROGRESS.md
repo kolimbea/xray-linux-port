@@ -102,3 +102,10 @@ null render backend, link the all-in-one executable, boot headless with Anomaly 
   OpenXRay strncpy_s wiped the buffer instead of honouring _TRUNCATE.
 - Not ported (noted): Text_Console (dedicated server only), tntQAVI (AVI textures, renderer
   stage), keyboard layout switching from the console (ActivateKeyboardLayout).
+
+## Decision 2026-11-23 (later) — dxvk-native back as the temporary step
+Measured: 72/123 Layers/xrRender sources call D3D directly and model loading (needed by game
+logic) creates GPU buffers, so a null renderer would require the full render split first. Switched to
+the user's original plan: R4 on dxvk-native 3.1.1 now, own Vulkan renderer after (details PLAN.md).
+Engine-wide Win32 types now come from dxvk's windows_base.h; verified no change in the xrCore
+smoke test against a stage1a-done build on the same fixture (50992 files, 11871 sections).

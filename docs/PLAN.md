@@ -18,19 +18,20 @@ Module layout: [ARCHITECTURE.md](ARCHITECTURE.md).
 Final product: native Linux engine with **own Vulkan 1.3 renderer `xrRender_VK`** — no dxvk and no
 D3D11 in the shipped build. GAMMA HLSL shaders are compiled unmodified (HLSL → SPIR-V via DXC).
 
-## Decision: go straight to Vulkan, no dxvk-native stage
-dxvk-native was planned as a stepping stone for (a) a playable game sooner and (b) reference images.
-Both are covered more cheaply otherwise:
-- **Reference images** come from the existing GAMMA under Proton+DXVK on this same machine
-  (`~/Games/gamma`): same shaders, same driver, same saves. The screenshot autotest drives both builds
-  to the same save + camera pose and compares.
-- **Engine/game logic** can run before any rendering through a null render backend, so Stage 3-style
-  log-driven compatibility work does not have to wait for pixels.
-- A dxvk-native R4 needs its own work that the Vulkan path throws away: D3D11 header/ABI plumbing,
-  D3DCompile/D3DReflect on Linux (vkd3d-shader, SM5 coverage unproven), D3DX replacements.
-  The Vulkan path needs the shader pipeline anyway, and DXC gives both SPIR-V and reflection.
-Cost of the decision: the first frame on Linux comes later (needs the VK backend's minimum: device,
-swapchain, buffers, textures, shader pipeline). Revisit if Stage 2a slips by more than 50 %.
+## Decision (revised 2026-11-23, second time): dxvk-native as the temporary step
+The first revision skipped dxvk-native. Measured in Stage 1c, that does not hold: skeletal
+animation, bone queries and OGF model loading — which game logic needs even without pixels — live
+in `Layers/xrRender`, and 72 of its 123 .cpp files call D3D directly (vertex/index buffers are created
+while loading a model). A null backend would mean the full render split before the engine can boot.
+So, as the user originally proposed:
+- **Now**: R4 (D3D11) + Layers/xrRender build on Linux against dxvk-native 3.1.1 (headers + libs,
+  pinned in tools/fetch_deps.sh). `D3DCompile`/`D3DReflect` → vkd3d-utils 1.17 (installed). D3DX11
+  helpers get own replacements. This boots the engine, runs GAMMA logic and gives the reference image
+  natively (Proton screenshots stay as a second reference).
+- **Then** (stage 2a+): split backend-neutral code out of Layers/xrRender against a small backend
+  interface and write xrRender_VK; dxvk is removed from the final build.
+- dxvk's `windows_base.h` also supplies the Win32 base types for the whole engine (Windows-accurate
+  widths), replacing OpenXRay's divergent typedefs.
 
 ## Stages
 | stage | deliverable | check |
@@ -38,7 +39,7 @@ swapchain, buffers, textures, shader pipeline). Revisit if Stage 2a slips by mor
 | 0 | plan, architecture | docs committed — done |
 | 1a | xrCore on Linux, case-insensitive FS | `libxrCore.so` mounts Anomaly archives — done |
 | 1b | xrCDB, xrSound (OpenAL Soft), xrPhysics/ODE, xrParticles, xrXMLParser, luajit+luabind | libs link |
-| 1c | xrEngine + SDL3 window/input/timers + **null render backend**, xrGame links | engine boots to main-menu logic headless, scripts load, log clean |
+| 1c | xrEngine + SDL3 window/input/timers, R4 on dxvk-native, xrGame links | engine boots to the main menu, scripts load, log clean |
 | 2a | render abstraction: split backend-neutral code out of Layers/xrRender (shader manager, resources, visibility) behind an interface; R4 keeps building on Windows | Windows build unchanged; Linux builds with null backend |
 | 2b | HLSL pipeline: DXC HLSL→SPIR-V for GAMMA's .vs/.ps/.gs/.cs with a compat prelude (macros/wrappers for D3D register/sampler/cbuffer conventions), SPIR-V reflection replaces D3DReflect, on-disk SPIR-V + VkPipelineCache | all GAMMA shaders compile; reflection matches the R4 binding expectations |
 | 2c | xrRender_VK core: Vulkan 1.3 device (dynamic rendering, synchronization2, timeline semaphores), VMA memory, bindless textures via descriptor indexing, swapchain, upload/streaming within 4 GB VRAM | main menu renders |
