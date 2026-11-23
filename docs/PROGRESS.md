@@ -87,3 +87,18 @@ null render backend, link the all-in-one executable, boot headless with Anomaly 
 - xrServerEntities has no own .vcxproj (its sources are compiled as part of xrGame).
 - Tooling fixed: probe/vcxproj parser handle subdirectory sources, case-mismatched directories
   (`AI/` vs `ai/`), projects without a plain Release config.
+
+## Stage 1c — in progress 2026-11-23
+- xrEngine builds through CMake except 14 TUs: Device_create/Initialize/wndproc + device.cpp
+  (Win32 window & message loop -> SDL3), EngineAPI.cpp (renderer selection: needs the null
+  backend), x_ray.cpp, console line editor (keyboard-layout APIs), imgui input, fmesh (d3dx9).
+- Input: `Common/linux/dinput_sdl.cpp` emulates DirectInput 8 over SDL3 so Xr_input.cpp runs
+  unchanged (buffered events, acquire, coop level -> relative mouse, key names). DIK values from
+  mingw-w64 dinput.h; SDL->DIK table generated from names in both headers (117 keys). Unit test
+  `tests/compat_dinput.cpp` passes.
+- Window: `win32_window.cpp` maps HWND to SDL_Window* (cursor, clip, rects, monitors, display
+  mode). Constants from mingw-w64 winuser.h. MonitorList over SDL displays.
+- Bugs fixed on the way: OpenXRay's POINT/RECT used 64-bit long (engine casts int pairs to them),
+  OpenXRay strncpy_s wiped the buffer instead of honouring _TRUNCATE.
+- Not ported (noted): Text_Console (dedicated server only), tntQAVI (AVI textures, renderer
+  stage), keyboard layout switching from the console (ActivateKeyboardLayout).
