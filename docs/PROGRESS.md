@@ -75,3 +75,15 @@ They are not linked into an executable yet, so unresolved cross-module symbols s
 ## Next — Stage 1c
 xrEngine (SDL3 window/input, x_ray.cpp entry, XR_EARLY_INIT guard), xrServerEntities, xrGame,
 null render backend, link the all-in-one executable, boot headless with Anomaly data.
+
+## Stage 1c — first probe 2026-11-23
+- xrEngine: all 105 TUs stop at `xrEngine/stdafx.h:28 #include <d3d9.h>` — the engine precompiled
+  header pulls D3D9 types in everywhere. First 1c task: find which D3D types engine code really uses
+  (D3DCOLOR, D3DXVECTOR/MATRIX, D3DVIEWPORT, caps) and give them backend-neutral definitions in a
+  stand-in header, which also serves the render split in 2a.
+- xrGame: 23460 error lines in 1356 TUs, nearly all cascading from the same engine header
+  (CGameFont, Device, ENGINE_API undefined after the d3d9.h failure). Real xrGame-specific errors
+  will appear only after xrEngine/stdafx.h is fixed.
+- xrServerEntities has no own .vcxproj (its sources are compiled as part of xrGame).
+- Tooling fixed: probe/vcxproj parser handle subdirectory sources, case-mismatched directories
+  (`AI/` vs `ai/`), projects without a plain Release config.
