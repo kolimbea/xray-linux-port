@@ -50,3 +50,28 @@ User changed the plan: final build uses `xrRender_VK` (Vulkan 1.3), no dxvk/D3D1
 dxvk-native stage entirely; reference screenshots come from the existing Proton+DXVK GAMMA install,
 engine logic runs on a null backend until VK draws. Reasoning and revised stages/estimate in PLAN.md,
 render split and shader pipeline in ARCHITECTURE.md. Stage 1 (1b, 1c) is finished first.
+
+## Stage 1b — built 2026-11-23 (tag `stage1b-built`)
+Static libraries build with clang: xrCDB, xrXMLParser, xrCPU_Pipe, xrParticles, xrSound (system
+OpenAL Soft 1.24 + vorbis/ogg), ODE, xrPhysics, LuaJIT, luabind, lua_extensions — plus libxrCore.so.
+They are not linked into an executable yet, so unresolved cross-module symbols show up only in 1c.
+- **Build flags**: added `-fdelayed-template-parsing` (MSVC-style lookup into dependent bases;
+  xrPhysics went from 20956 to 103 errors with it). It is deprecated in clang but present in 22;
+  if it disappears, `tools/fixit_pass.sh` + `this->` edits are the fallback.
+- **Mechanical fixes** (tools in repo): `fix_opaque_enums.py` — 34 forward-declared enums get
+  `: int` (MSVC's implicit type) in declarations and definitions, their `u32(-1)` sentinels become
+  `-1` (value MSVC stored); `fixit_pass.sh`/`apply_fixits.py` — inserts missing `typename` at clang's
+  reported spot only (no guessed fix-its).
+- **LuaJIT**: Monolith ships a patched 2.0.4 (xr_alloc, lj_allocprof) without Makefiles; CMake now
+  runs minilua → DynASM (vm_x86.dasc, -D P64) → buildvm (elfasm, bcdef/ffdef/libdef/recdef/vmdef/folddef).
+  The Windows low-address pool (xr_alloc.c) is compiled out; LuaJIT's own MAP_32BIT path is used.
+  `tests/luajit_smoke.c`: 1e7-iteration loop, JIT on, FFI call into libc — pass.
+- Linux-specific swaps: ttapi thread pool over pthreads (CreateThread/WaitForMultipleObjects shims),
+  audio device notifications dropped (OpenAL Soft follows default device), Winsock luasocket → POSIX.
+- Fixed real bugs exposed by clang: luabind `friend struct scope` befriended the wrong class,
+  invalid `##` token pastes in dTriBox.cpp, a local shadowing a template parameter in
+  dSortTriPrimitive.h, `ov_seek_func` signature vs `ogg_int64_t`.
+
+## Next — Stage 1c
+xrEngine (SDL3 window/input, x_ray.cpp entry, XR_EARLY_INIT guard), xrServerEntities, xrGame,
+null render backend, link the all-in-one executable, boot headless with Anomaly data.
