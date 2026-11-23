@@ -115,3 +115,22 @@ smoke test against a stage1a-done build on the same fixture (50992 files, 11871 
   1000 random matrices, A*A^-1 = I within float precision; singular input leaves output untouched).
 - Next: xrNetServer without DirectPlay. OpenXRay ships "empty" NET_Client/NET_Server for Linux on
   which single-player works; port that to Monolith's headers (they differ ~120-180 lines each).
+
+## Stage 1c — 2026-11-23 (continued)
+- Everything except xrGame now compiles: xrCore, xrCDB, xrXMLParser, xrCPU_Pipe, xrParticles,
+  xrSound, ODE, xrPhysics, LuaJIT, luabind, lua_extensions, imgui, xrNetServer, xrEngine.
+  - xrEngine: x_ray.cpp `main()` for Linux, single-instance lock via flock, dlopen-based LoadLibrary.
+  - xrNetServer: DirectPlay8 headers from mingw-w64; single-player uses psNET_direct_connect and never
+    creates DirectPlay objects; COM activation fails cleanly (REGDB_E_CLASSNOTREG) for multiplayer.
+- xrGame (1247 TUs, includes xrServerEntities): sampled check of 120 TUs went 974 -> 381 error lines.
+  Fixed: precompiled-header case (xrServerEntities/xrGame sources found xrCore's stdafx.h instead of
+  xrGame/StdAfx.h), template parameters re-typedef'd to their own name, names inside template template
+  parameters, dependent-base members, `typename const`, several MSVC-only declarations.
+- **Open decision — AI navigation templates.** vertex_manager_*, data_storage_*, dijkstra, a_star,
+  graph_engine (~60 headers) use MSVC-only template constructs heavily (class templates as default
+  *type* arguments, nested parameters shadowing outer ones). Options:
+  (a) fix Monolith's files in place — keeps exact behaviour, slow, error-prone;
+  (b) adopt OpenXRay's rewritten xrAICore navigation (portable, used on Linux for years) and adapt
+      callers — faster, but a different implementation of A-Life/level pathfinding, so GAMMA behaviour
+      must be checked (paths, NPC movement, saves).
+  Recommendation: (a) for now, file by file, guided by OpenXRay's fixes; revisit if it exceeds a few days.

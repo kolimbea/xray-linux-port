@@ -30,7 +30,9 @@ def fix(t):
             continue
         end = close(t, m.end())
         inner = t[m.end(): end - 1]
-        if "=" in inner or "<" in inner:  # defaults or nested lists: leave for manual review
+        names = re.findall(r"\b(?:typename|class)\s+(\w+)", inner)
+        # a name referenced again inside the list (e.g. by a default argument) must stay
+        if any(len(re.findall(r"\b%s\b" % n, inner)) > 1 for n in names):
             continue
         new_inner = re.sub(r"\b(typename|class)\s+\w+", r"\1", inner)
         if new_inner != inner:

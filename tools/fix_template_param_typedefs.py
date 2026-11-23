@@ -42,7 +42,11 @@ def fix(t, path):
             print("skip (no enclosing template):", path, name)
             return t
         a, b = scope
-        body = re.sub(r"\b%s\b" % name, name + "_", t[a:b])
+        # rename unqualified uses only: `X::name`, `obj.name`, `p->name` refer to members
+        body = re.sub(r"(?<!::)(?<!\.)(?<!->)\b%s\b" % name, name + "_", t[a:b])
+        # a typedef that declares `name` (other than ours) keeps declaring `name`
+        body = re.sub(r"typedef\s+(?!%s_\s+%s_\s*;)(.+?)\s+%s_\s*;" % (name, name, name),
+                      lambda mm: "typedef %s %s;" % (mm.group(1), name), body)
         body = re.sub(r"typedef\s+%s_\s+%s_\s*;" % (name, name), "typedef %s_ %s; %s" % (name, name, MARK), body, count=1)
         t = t[:a] + body + t[b:]
 
