@@ -51,6 +51,8 @@ def main():
     src = os.path.abspath(sys.argv[1])
     dry = "--dry-run" in sys.argv
     roots = [src, os.path.join(src, "..", "sdk", "include"), os.path.join(src, "3rd party")]
+    # module directories are include roots too (vcxproj AdditionalIncludeDirectories use them)
+    roots += [os.path.join(src, m) for m in sorted(os.listdir(src)) if os.path.isdir(os.path.join(src, m)) and m != "3rd party"]
     idx = CaseIndex()
     stats = {"slash": 0, "case": 0, "files": 0}
     for dirpath, _, files in os.walk(src):
