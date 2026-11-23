@@ -135,19 +135,19 @@ smoke test against a stage1a-done build on the same fixture (50992 files, 11871 
       must be checked (paths, NPC movement, saves).
   Recommendation: (a) for now, file by file, guided by OpenXRay's fixes; revisit if it exceeds a few days.
 
-## Paused 2026-11-23 — where to resume
-State: everything except xrGame compiles (`ninja -C build/monolith`). AI navigation templates fixed
-in place (user decision: keep Monolith's code, no OpenXRay rewrite). One fixit pass over xrGame
-applied (70 files); the second/third passes were stopped by the user's pause request.
+## Paused 2026-11-23 (second time) — where to resume
+State: everything except xrGame compiles. xrGame sampled check (150 TUs): 157 error lines, down from
+974. Remaining are mostly dependent-base members in AI navigation inline headers (a_star, path_manager_*,
+action_planner: data_storage, graph, solution, m_failed, ...) plus a few one-offs.
 Resume with:
-1. `tools/fixit_pass.sh /src/xrGame/` until it reports 0 edits (needs build/monolith/compile_commands.json;
-   rerun `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON build/monolith` if missing).
-2. `TOP=40 tools/check.sh /src/xrGame/ 120` — sampled error groups (last: 347 lines before the pass).
-   Known open items: property_evaluator_* (`_value_type`/`_condition_type` from dependent bases,
-   out-of-line return types), operator_abstract_inline.h:425 (missing typename on iterator decls),
-   game_cl_mp.h SYSTEMTIME, UIInvUpgradeProperty shared_str through varargs, script_render_device
-   def_readonly.
-3. Full build of xrGame (~11 min on 8 threads), then link the executable (all-in-one) and boot
-   headless against the Anomaly fixture (tests/xrcore_smoke.cpp shows the fixture layout).
+1. Opt-in `this->` for those headers, then fixit passes to a fixpoint:
+   `export XR_THIS_FILES='/xrGame/(a_star|dijkstra|path_manager|action_planner|graph_edge|problem_solver|data_storage|vertex_manager|operator_abstract)[a-z_]*\.h$'`
+   `tools/fixit_pass.sh /src/xrGame/`   (repeat until it reports 0; it writes files only at the end)
+2. `TOP=45 tools/check.sh /src/xrGame/ 150`. Known one-offs: IKLimb.h:15 (nested-name forward
+   declaration), HUDTarget.cpp:106 / HUDCrosshair.cpp:68 (declaration vs using-declaration),
+   script_game_object_inventory_owner.cpp:2044 (returns bool as LPCSTR), script_imgui_inline.h
+   (address of temporary ImVec2 at 386/416), alife_registry_wrapper.h:69.
+3. Full xrGame build (~11 min), link the all-in-one executable, boot headless on the Anomaly fixture.
 Tools: fix_includes.py, fix_opaque_enums.py, fix_template_param_typedefs.py,
-fix_template_template_names.py, fixit_pass.sh + apply_fixits.py, check.sh, probe.sh, fetch_deps.sh.
+fix_template_template_names.py, fixit_pass.sh + apply_fixits.py (XR_THIS_FILES opt-in), check.sh,
+probe.sh, fetch_deps.sh.

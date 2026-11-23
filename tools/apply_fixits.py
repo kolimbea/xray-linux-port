@@ -23,6 +23,10 @@ INSERT_AT = [
 # "use of undeclared identifier 'x'" is only fixed when clang's next note confirms the name lives in
 # a dependent base class (MSVC finds it there without this->).
 UNDECLARED = re.compile(r"use of undeclared identifier '(\w+)'")
+import os
+# Opt-in: files (regex) whose undeclared identifiers are all dependent-base members, so this-> is
+# inserted without clang's confirming note (clang only emits it in MS-compatibility mode).
+THIS_FILES = re.compile(os.environ["XR_THIS_FILES"]) if os.environ.get("XR_THIS_FILES") else None
 DEP_NOTE = re.compile(r"note: must qualify identifier to find this declaration in dependent base class")
 FIX = re.compile(r'^fix-it:"(?P<file>[^"]+)":\{(?P<l1>\d+):(?P<c1>\d+)-(?P<l2>\d+):(?P<c2>\d+)\}:"(?P<text>.*)"$')
 
@@ -41,6 +45,9 @@ for line in sys.stdin:
         pending = None
         if UNDECLARED.search(m.group("msg")):
             pending = (m.group("file"), int(m.group("line")), int(m.group("col")))
+            if THIS_FILES and THIS_FILES.search(m.group("file")):
+                edits[m.group("file")].add((pending[1], pending[2], pending[1], pending[2], "this->"))
+                pending = None
         allowed = any(p.search(m.group("msg")) for p in ALLOWED)
         for pat, text in INSERT_AT:
             if pat.search(m.group("msg")):
