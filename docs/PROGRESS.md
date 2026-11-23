@@ -109,3 +109,9 @@ logic) creates GPU buffers, so a null renderer would require the full render spl
 the user's original plan: R4 on dxvk-native 3.1.1 now, own Vulkan renderer after (details PLAN.md).
 Engine-wide Win32 types now come from dxvk's windows_base.h; verified no change in the xrCore
 smoke test against a stage1a-done build on the same fixture (50992 files, 11871 sections).
+- 2026-11-23 later: xrEngine builds except x_ray.cpp. SDL3 window (SDL_WINDOW_VULKAN, dxvk WSI
+  "SDL3"), event loop + on_sdl_event replacing WndProc (focus -> OnWM_Activate, close -> quit, text
+  input -> imgui as Unicode), D3DX9 replaced by an FVF-size helper and a 4x4 inverse (tested:
+  1000 random matrices, A*A^-1 = I within float precision; singular input leaves output untouched).
+- Next: xrNetServer without DirectPlay. OpenXRay ships "empty" NET_Client/NET_Server for Linux on
+  which single-player works; port that to Monolith's headers (they differ ~120-180 lines each).
