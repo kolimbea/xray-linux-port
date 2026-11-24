@@ -47,6 +47,23 @@ class CaseIndex:
         return "/".join(out)
 
 
+_module_files = {}
+
+
+def unique_in_module(src, module, name):
+    """Path of the only file called `name` (case-insensitive) inside src/module, else None."""
+    if module in (".", "3rd party"):
+        return None
+    if module not in _module_files:
+        idx = {}
+        for d, _, fs in os.walk(os.path.join(src, module)):
+            for f in fs:
+                idx.setdefault(f.lower(), []).append(os.path.join(d, f))
+        _module_files[module] = idx
+    hits = _module_files[module].get(name.lower(), [])
+    return hits[0] if len(hits) == 1 else None
+
+
 def main():
     src = os.path.abspath(sys.argv[1])
     dry = "--dry-run" in sys.argv
@@ -66,7 +83,7 @@ def main():
 
             def fix(m):
                 lead, o, inc, c = m.groups()
-                new = inc.replace("\\", "/")
+                new = inc.replace("\\", "/").strip()  # MSVC ignores surrounding blanks in the name
                 if new != inc:
                     stats["slash"] += 1
                 if o == '"':
@@ -82,6 +99,13 @@ def main():
                                 stats["case"] += 1
                                 new = real
                                 break
+                        else:
+                            # MSVC also resolves "../../x.h" against directories of files higher in the
+                            # include stack; fall back to the file's unique occurrence in its own module.
+                            hit = unique_in_module(src, rel, os.path.basename(new))
+                            if hit:
+                                stats["moved"] = stats.get("moved", 0) + 1
+                                new = os.path.relpath(hit, dirpath).replace(os.sep, "/")
                 return f"{lead}{o}{new}{c}"
 
             out = INC.sub(fix, text)
