@@ -1,3 +1,4 @@
 monolith/
 openxray/
 build/
+__pycache__/
