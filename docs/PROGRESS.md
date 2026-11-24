@@ -209,3 +209,21 @@ are in PLAN.md ("Track: performance & multithreading", "Process rules"); all ado
 de-risking is exactly the next step. The auto-resume timer is no longer wanted (user), not set up.
 Side note: the engine log shows the GTX 1650 Ti with AMD vendor id 1002 — that is dxvk hiding NVIDIA
 (its default without NVAPI), so the NVIDIA GPU was used.
+
+## 2026-11-24 — stage 2b started: DXC over all Anomaly R4 shaders (offline)
+- DXC 1.9.2609 (official Linux build, pinned + sha256 in tools/fetch_deps.sh) -> SPIR-V, Vulkan 1.3,
+  `-HV 2018 -Zpr`, one representative define set (tools/dxc_scan.sh).
+- Shader sources exported from the archives through the engine's own VFS: tools/extract_tree
+  (`$game_shaders$`, 970 files) run in build/fixture-anomaly (tools/make_fixture.sh), install read-only.
+- Result, unmodified sources: **329 / 368** r3 shader files compile. 23 of the failures were one
+  construct: `Texture2D.Load(loc, non_literal_offset)` (shadow.h:183) — SPIR-V needs immediate offsets.
+- Compat rule 1 (tools/hlsl_rewrite.py, prototype to be ported into the engine's shader pipeline):
+  `Load(loc, off)` -> `Load(loc + int3(off, 0))` on Texture2D/Texture2DArray (exact: the offset is added
+  to the integer coordinate). Not applied inside #define bodies (macro parameters have unknown type,
+  e.g. SMAALoad on Texture2DMS). With it: **352 / 368**.
+- The remaining 16: include spelled with different case (resolved by the engine's case-insensitive
+  FS), include-only fragments/dead files (`*_old`, a file name with a space, ssao.ps/ssao_hdao.ps without
+  `main`), files needing other define sets; real DXC-vs-FXC strictness only in two: lower-case
+  `texture2D` (ssao_hbao.ps) and a duplicated input semantic (models_lfo_light_dot_weapons.ps).
+- Conclusion: DXC is viable for the whole set; the next check is GAMMA's shader overlay (MO2 mods)
+  and the define variants the engine actually requests.
