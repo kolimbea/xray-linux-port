@@ -165,3 +165,41 @@ xrGame (1243 TUs incl. xrServerEntities). Not linked yet; renderer not compiled 
   `this->` before the diagnosed identifier. vcxproj parser honours unconditional ExcludedFromBuild.
 Next: renderer (xrRenderPC_R4 + Layers/xrRender + xrRenderDX10) against dxvk-native headers,
 D3DCompile/D3DReflect via vkd3d-utils, D3DX11 replacements; then link the executable.
+
+## 2026-11-24 — renderer compiles, executable links and boots to shader compilation
+Tags in monolith/: `stage1c-all-compiles`, `stage1c-linked`.
+- xrRender_R4 (+ Layers/xrRender, xrRenderDX10) compiles against dxvk-native 3.1.1 headers. The
+  DirectX SDK D3DX9/10/11 headers in `sdk/include/dxsdk` are used (exposed case-insensitively through
+  `build/monolith/dxsdk_ci`); mingw d3dx9 headers from dxvk do not coexist with D3DX11.
+- Own replacements for Windows-only libraries (Common/linux): `d3dx9_linux.cpp` (math, half floats,
+  FVF declarations), `d3dx11_tex_linux.cpp` + `dds_codec` (DDS load incl. legacy formats/cubes/volumes,
+  texture copy with resize + BC1 for save thumbnails, DDS/BMP/PNG/JPG save, mip filtering),
+  `d3dcompiler_linux.cpp` (D3DCompile on vkd3d-shader's C API, own D3DReflect from RDEF/ISGN/OSGN,
+  D3DGetInputSignatureBlob, D3DDisassemble, D3DCreateBlob). crypto uses the system OpenSSL 3 with an
+  own SHA-0 (OpenSSL dropped it; digests stay identical). ReShade add-on hooks: stub (no ReShade on
+  Linux). NVAPI off. AVI (Video for Windows) textures: Load() fails like a missing file.
+- Why not vkd3d-utils: on x86-64 Linux it declares WINAPI/COM as `ms_abi` (vkd3d_windows.h:193);
+  dxvk-native and the engine use System V — the first D3DCompile crashed with garbage arguments.
+- Tests: tests/compat_dds.cpp (all 15626 DDS files in the GAMMA tree: 15618 parse, the other 8 are
+  PNGs renamed to .dds), compat_d3dx9.cpp, compat_sha0.cpp — all pass. tools/hlsl_check compiles one
+  HLSL file through the same code path.
+- First boot (fixture `fsgame.ltx` + `db`/`gamedata` symlinks to the Anomaly install, run under
+  `bwrap --ro-bind ~/Games/gamma` so the install cannot be written): core, configs, sound (OpenAL),
+  SDL3 window, D3D11 device on dxvk (GTX 1650 Ti, 4064 MB) all come up; ~100 shaders compile and land
+  in the fixture's shaders_cache.
+- `register(ps, t0)` (stage-specific reservation, E5017 in vkd3d) is rewritten on the preprocessed
+  text to d3dcompiler semantics (kept for that stage, dropped for others) — sources untouched.
+
+### Blocker — needs a decision (shader compiler for the temporary dxvk stage)
+vkd3d-shader 1.17 rejects `SV_ClipDistance`/`SV_CullDistance` (E5013), used by Anomaly's
+`accum_volumetric.vs`. That is a compiler feature gap, not syntax; it cannot be rewritten away.
+More gaps of this kind are likely in GAMMA's ~300 shader files. Options:
+1. **Skip the dxvk stage for shaders and go to xrRender_VK now** (DXC, HLSL -> SPIR-V; DXC supports
+   all of SM5). This is the mandatory end goal anyway; dxvk would keep serving only as a reference.
+   Cost: the first frame comes later (G-buffer path first), but no throw-away compiler work.
+2. Build a newer vkd3d (git) locally — only helps if upstream has the missing features; unknown.
+3. Compile shaders with the real d3dcompiler_47.dll under Wine/Proton into the engine's shader
+   cache (offline tool). Works for any shader, but needs a Windows helper binary (cross-toolchain
+   or clang-cl + import lib) and keeps a Windows component in the pipeline.
+Recommendation: 1 (with 3 as a fallback if an early dxvk image is wanted for reference shots).
+Not decided yet — it is hard to revert, so it is the user's call.
