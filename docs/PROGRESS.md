@@ -151,3 +151,17 @@ Resume with:
 Tools: fix_includes.py, fix_opaque_enums.py, fix_template_param_typedefs.py,
 fix_template_template_names.py, fixit_pass.sh + apply_fixits.py (XR_THIS_FILES opt-in), check.sh,
 probe.sh, fetch_deps.sh.
+
+## 2026-11-24 — xrGame compiles (tag `stage1c-game-built`)
+All engine and game code now compiles on Linux (clang 22): xrCore, xrCDB, xrXMLParser, xrCPU_Pipe,
+xrParticles, xrSound, ODE, xrPhysics, LuaJIT, luabind, lua_extensions, imgui, xrNetServer, xrEngine,
+xrGame (1243 TUs incl. xrServerEntities). Not linked yet; renderer not compiled yet.
+- AI navigation templates fixed in place (behaviour unchanged).
+- Real bugs found along the way (present on Windows too): pointers to temporary attachment matrices
+  (`&GetTransform()` returned by value) in script_attachment_manager; luabind friend scoping;
+  LevelGraph friend scoping; OpenXRay shim bugs (S_FALSE, strncpy_s/_TRUNCATE, POINT/RECT width).
+- Tooling lessons: apply_fixits keys edits by real path (headers reached through several `../`
+  spellings were edited twice at stale columns once — that commit was reverted), and only inserts
+  `this->` before the diagnosed identifier. vcxproj parser honours unconditional ExcludedFromBuild.
+Next: renderer (xrRenderPC_R4 + Layers/xrRender + xrRenderDX10) against dxvk-native headers,
+D3DCompile/D3DReflect via vkd3d-utils, D3DX11 replacements; then link the executable.
