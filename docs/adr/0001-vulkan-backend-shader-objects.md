@@ -40,3 +40,20 @@ offer exactly the ~55 device/context methods the renderer calls (inventory in PR
 as the D3D11 types they stand for, implemented on Vulkan (VMA, shader objects, automatic
 layout/barrier tracking for the limited X-Ray usage). Not COM, no D3D11/dxvk code. `vkHW.cpp`
 replaces `dx10HW.cpp` (instance, NVIDIA selection, SDL3 surface, swapchain).
+
+## Refinement 2026-11-24 (M3, shaders)
+- Bytecode handed to the engine (and stored in its shader cache) is SPIR-V as DXC emits it with
+  `-fspv-reflect`; anything else (DXBC from the R4 build's cache) is rejected by `Create*Shader`, so
+  the engine recompiles. The SPV_GOOGLE decorations are stripped before `vkCreateShadersEXT`.
+- Descriptors: one push-descriptor set per *program* (the stages bound for a draw), not one set per
+  stage — `VK_KHR_push_descriptor` allows a single push set per layout. Binding =
+  stage·256 + class base (b 0, t 16, s 144, u 160) + register, so stages never collide and the set
+  layout is the union of the stages' reflection. GAMMA's largest pass needs 18 descriptors
+  (limit 32 on all three test GPUs); a larger program fails with a logged reason.
+- Registers are renumbered densely per class after DXC (FXC-like): DXC numbers implicit registers over
+  all declared resources, and the engine binds cbuffer *i* of the reflection at slot *i*.
+- Stage interfaces: D3D links by semantic, Vulkan by location. D3DCompile gives every semantic a fixed
+  canonical location (table in vkShader.cpp, unknown semantics fail compilation); each program then
+  renumbers the locations densely per interface in its own SPIR-V copy, because the canonical range
+  (up to 29) exceeds the 16 locations Vulkan guarantees (RADV: maxGeometryInputComponents 64).
+- cbuffer layout via `-fvk-use-dx-layout` needs only the relaxed block layout of Vulkan 1.1 core.

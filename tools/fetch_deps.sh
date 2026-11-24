@@ -23,3 +23,16 @@ if [ ! -x "$d/bin/dxc" ]; then
   tar xzf "$d/dxc.tar.gz" -C "$d"
 fi
 echo "dxc 1.9.2609: $d/bin/dxc"
+
+# SPIRV-Reflect, tag vulkan-sdk-1.4.363.0 (commit f3e261fda74ca81b44d1941931c6b7b5fe236d0e), Apache-2.0:
+# reflection of the SPIR-V the Vulkan renderer compiles (replaces D3DReflect). Source only; built in.
+# sha256 of the GitHub tag tarball, recorded when first fetched (2026-11-24).
+d="$root/build/deps/spirv-reflect-1.4.363.0"
+if [ ! -f "$d/spirv_reflect.c" ]; then
+  mkdir -p "$d"
+  curl -sSfL -o "$d/src.tar.gz" \
+    https://github.com/KhronosGroup/SPIRV-Reflect/archive/refs/tags/vulkan-sdk-1.4.363.0.tar.gz
+  echo "e0b2914648ab2eac1c83851911199e73f868d966e183531e4c227a258ea07bc6  $d/src.tar.gz" | sha256sum -c -
+  tar xzf "$d/src.tar.gz" -C "$d" --strip-components=1
+fi
+echo "spirv-reflect 1.4.363.0: $d"

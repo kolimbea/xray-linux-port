@@ -277,3 +277,41 @@ Next: M2 — vkHW (Vulkan 1.3 instance/device on the NVIDIA GPU, SDL3 surface, s
   "vk: ID3D11Device::CreateBuffer not implemented" (milestone M4 work). 105 methods pending.
 Next: M3 (shaders: DXC in-process + SPIR-V reflection + shader objects), then M4 (buffers, textures,
 states, draws -> main menu).
+
+## 2026-11-24 — stage 2, milestone M3 (shaders) — backend done, in-game check moves to M4
+- In-process DXC 1.9.2609 (`xrVK_shaderc`: `vkDxc.cpp`, isolated from the engine's Win32 stand-ins)
+  implements `D3DCompile`: DXC preprocessor with the engine's ID3DInclude -> compat rules on the
+  preprocessed text (`vkHlslRewrite.cpp`, the C++ port of tools/hlsl_rewrite.py; unit test
+  `vk_hlsl_rewrite`) -> HLSL -> SPIR-V -> binding/location fix-ups. Flags: `-spirv
+  -fspv-target-env=vulkan1.3 -HV 2018 -fvk-use-dx-layout -fspv-reflect -fvk-use-dx-position-w
+  -fvk-auto-shift-bindings`, per-stage register shifts, `-Zpr` from D3DCOMPILE_PACK_MATRIX_ROW_MAJOR.
+- Reflection from SPIR-V (SPIRV-Reflect vulkan-sdk-1.4.363.0, pinned in tools/fetch_deps.sh):
+  `D3DReflect` (ID3D11ShaderReflection/ConstantBuffer/Variable/Type), `D3DGetInputSignatureBlob`
+  (own blob format for CreateInputLayout), `D3DCreateBlob`; `D3DDisassemble` writes the reflection
+  as text (no SPIR-V disassembler in the backend). Type names point into each reflection like
+  d3dcompiler's, so dx10ConstantBuffer::Similar behaves as on Windows.
+- `ID3D11Device::Create{Vertex,Hull,Domain,Geometry,Pixel,Compute}Shader` and programs (linked
+  shader objects + push-descriptor layout per stage combination, cached per device). Binding and
+  location scheme: ADR 0001 refinement (M3).
+- Checks (`tests/vk_shaders.cpp`, GAMMA tree, r4.cpp's flags and a default define set):
+  453/470 files compile (same as the dxc CLI scan; the 17 others are fragments without their own
+  definitions, a case-differing include, and two FXC-only constructs: lowercase `texture2D` in
+  ssao_hbao.ps, duplicate TEXCOORD0 in models_lfo_light_dot_weapons.ps), all 453 reflect, 0 spirv-val
+  failures, and 515 programs (each shader alone + 62 linked VS+PS pairs) are created with
+  **0 validation errors on NVIDIA 620.70, RADV 26.2 and llvmpipe**. 7.7 s for the tree on 8 threads.
+- Reflection vs the R4 path (`tests/reflect_dump.cpp` built twice, `tools/reflect_compare.py`;
+  reference = vkd3d DXBC, 435 files; 433 compared): every variable both report has the same size,
+  class, type, rows, columns and elements, and the same offset in named cbuffers. Differences are
+  DXC removing dead code that vkd3d keeps (37 VS signatures without unused inputs, 39 unused
+  resources, 5 cbuffers of shaders whose uses are dead) — none inside a cbuffer that is present.
+- Found in GAMMA's ssfx_ao.ps: the inner loop `for (int j = 1; j <= 2; i++)` never terminates by
+  HLSL semantics, so DXC reduces the shader to its early-out `return float4(0,0,0,1)` (no SSFX AO).
+  What FXC makes of it is to be compared on the Windows/Proton reference (screenshot test).
+- vkd3d-shader (R4 path) hangs with >14 GB on deffer_tree_s_bump_d.vs; tests/reflect_dump_r4.sh runs
+  the reference one file per process with a timeout and a memory limit.
+- In the game nothing changed in behaviour: `xray_vk` still stops at
+  "ID3D11Device::CreateBuffer not implemented" (CBackend::CreateQuadIB, before any shader load), so
+  "every shader the engine requests" is checked once M4 gets the game to shader loading.
+  84 backend methods pending (was 105).
+Next: M4 — buffers, textures/SRVs, samplers and states, constants, input layouts -> vertex input,
+draws with dynamic rendering -> main menu.
