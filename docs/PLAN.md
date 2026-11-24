@@ -39,7 +39,7 @@ So, as the user originally proposed:
 | 0 | plan, architecture | docs committed — done |
 | 1a | xrCore on Linux, case-insensitive FS | `libxrCore.so` mounts Anomaly archives — done |
 | 1b | xrCDB, xrSound (OpenAL Soft), xrPhysics/ODE, xrParticles, xrXMLParser, luajit+luabind | libs link |
-| 1c | xrEngine + SDL3 window/input/timers, R4 on dxvk-native, xrGame links | engine boots to the main menu, scripts load, log clean |
+| 1c | xrEngine + SDL3 window/input/timers, R4 on dxvk-native, xrGame links | everything links, boots to shader compilation — done 2026-11-24; main menu on dxvk dropped (see decision 2026-11-24) |
 | 2a | render abstraction: split backend-neutral code out of Layers/xrRender (shader manager, resources, visibility) behind an interface; R4 keeps building on Windows | Windows build unchanged; Linux builds with null backend |
 | 2b | HLSL pipeline: DXC HLSL→SPIR-V for GAMMA's .vs/.ps/.gs/.cs with a compat prelude (macros/wrappers for D3D register/sampler/cbuffer conventions), SPIR-V reflection replaces D3DReflect, on-disk SPIR-V + VkPipelineCache | all GAMMA shaders compile; reflection matches the R4 binding expectations |
 | 2c | xrRender_VK core: Vulkan 1.3 device (dynamic rendering, synchronization2, timeline semaphores), VMA memory, bindless textures via descriptor indexing, swapchain, upload/streaming within 4 GB VRAM | main menu renders |
@@ -51,6 +51,34 @@ So, as the user originally proposed:
 | 3 | GAMMA compatibility (COMPAT.md), Windows save compatibility, FPS/frametime/load vs Proton | parity or better |
 
 Each stage: branch in `monolith/`, small commits, tag, entry in PROGRESS.md.
+
+## Decision 2026-11-24 (user): go to xrRender_VK now
+vkd3d-shader 1.17 cannot compile all of Anomaly's HLSL (`SV_ClipDistance`, PROGRESS.md "Blocker").
+Instead of more work on the temporary dxvk path, stage 2 starts now; order 2b (DXC pipeline,
+offline over all shaders) -> 2a (render abstraction) -> 2c. The R4/dxvk build stays compilable as a
+reference for API usage, not as a milestone.
+
+## Track: performance & multithreading (user request 2026-11-24)
+Correctness and GAMMA behaviour first; this track starts after the first frame and is designed into
+xrRender_VK from the start. Target CPU: Ryzen 5 3550H (4C/8T); GPU GTX 1650 Ti 4 GB (hybrid with Vega).
+- Measure first: Tracy (or similar) zones, frametime with 1% lows / stutter, per-core load; before
+  and after every change, same save and route.
+- Build configs: Debug (-O0) and Release (-O2, ThinLTO, `-march=znver1`); PGO from a real session later.
+- Candidates: oneTBB task jobs; parallel visibility/culling and sector traversal; async texture and
+  resource streaming; shader prewarm on load + VkPipelineCache on disk; multithreaded command
+  recording in xrRender_VK; parallel A-Life/AI and physics where data allows.
+- Lua/luabind is not thread-safe: script callbacks stay on the main thread. In GAMMA scripts are a
+  major CPU cost: profile callbacks and LuaJIT GC; evaluate LuaJIT 2.1 (mod compatibility first).
+- Saves and gameplay stay deterministic as on Windows.
+- VRAM budget for GAMMA HD textures (streaming, budget control); make sure the NVIDIA GPU is used
+  (not Vega) and presentation does not stall on PRIME.
+
+## Process rules (adopted 2026-11-24 from the user's review)
+- De-risk shaders offline over the whole GAMMA set before relying on a compiler (doing it now with DXC).
+- Behaviour regression test once it boots: load the user's save, tick A-Life headless for minutes,
+  compare with the Windows build under Proton.
+- Mechanical edits (case, `this->`, `typename`) in separate commits from semantic ones, to keep
+  rebases on Monolith/GAMMA updates manageable.
 
 ## Estimate (order of magnitude, one engineer-equivalent, revised 2026-11-23)
 | stage | estimate |

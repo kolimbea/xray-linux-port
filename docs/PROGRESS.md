@@ -203,3 +203,9 @@ More gaps of this kind are likely in GAMMA's ~300 shader files. Options:
    or clang-cl + import lib) and keeps a Windows component in the pipeline.
 Recommendation: 1 (with 3 as a fallback if an early dxvk image is wanted for reference shots).
 Not decided yet — it is hard to revert, so it is the user's call.
+Decided 2026-11-24 by the user: option 1 — go to xrRender_VK now (PLAN.md "Decision 2026-11-24").
+The notes in STATUS.md were confirmed as the user's: the performance track and the review suggestions
+are in PLAN.md ("Track: performance & multithreading", "Process rules"); all adopted — the shader
+de-risking is exactly the next step. The auto-resume timer is no longer wanted (user), not set up.
+Side note: the engine log shows the GTX 1650 Ti with AMD vendor id 1002 — that is dxvk hiding NVIDIA
+(its default without NVAPI), so the NVIDIA GPU was used.
