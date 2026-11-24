@@ -58,6 +58,14 @@ Instead of more work on the temporary dxvk path, stage 2 starts now; order 2b (D
 offline over all shaders) -> 2a (render abstraction) -> 2c. The R4/dxvk build stays compilable as a
 reference for API usage, not as a milestone.
 
+## Stage 2 milestones to the main menu (approved 2026-11-24, ADR 0001)
+| milestone | content | check |
+|---|---|---|
+| M1 | stage 2a seam + `xrRender_VK` target builds; unimplemented backend functions fail loudly (R_ASSERT/log), no silent stubs; `STATIC_RENDERER_VK` selection | R4/dxvk still builds and boots as before; `xrRender_VK` links without dxvk |
+| M2 | vkHW: NVIDIA selection, device, SDL3 swapchain, clear + present | validation layers: 0 errors; screenshot |
+| M3 | every shader the engine requests compiles via in-process DXC, reflects, becomes a shader object | 0 failures in the log; SPIR-V constant tables match D3DReflect on shaders vkd3d also compiles; rewrite-rule unit tests |
+| M4 | buffers, textures, RTs, constants, states, UI pass -> main menu | screenshot test vs Proton reference; validation clean |
+
 ## Track: performance & multithreading (user request 2026-11-24)
 Correctness and GAMMA behaviour first; this track starts after the first frame and is designed into
 xrRender_VK from the start. Target CPU: Ryzen 5 3550H (4C/8T); GPU GTX 1650 Ti 4 GB (hybrid with Vega).
