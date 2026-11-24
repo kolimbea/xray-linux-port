@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 static int failures = 0;
@@ -113,6 +114,19 @@ int main()
         ctx->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
         CHECK(SUCCEEDED(sc->Present(1, 0)));
         SDL_PumpEvents();
+    }
+
+    // VK_SMOKE_HOLD=<seconds>: keep presenting so the window can be looked at
+    if (const char *hold = getenv("VK_SMOKE_HOLD"))
+    {
+        const uint64_t until = SDL_GetTicks() + uint64_t(atoi(hold)) * 1000;
+        while (SDL_GetTicks() < until)
+        {
+            ctx->OMSetRenderTargets(1, &rtv, dsv);
+            ctx->ClearRenderTargetView(rtv, colour);
+            CHECK(SUCCEEDED(sc->Present(1, 0)));
+            SDL_PumpEvents();
+        }
     }
 
     // readback of the back buffer (what screenshots do)
