@@ -30,3 +30,13 @@ OpenXRay added an OpenGL backend the same way (`USE_OGL`, ~37 shared files touch
   all three extensions). No pipeline-based fallback for now; adding one later means a pipeline cache
   keyed by RCache state.
 - Y flip via negative viewport height; shaders unchanged.
+
+## Refinement 2026-11-24 (during M1)
+The shared layer reaches into `xrRenderDX10` directly (StateManager, dx10BufferUtils,
+dx10ConstantBuffer, state caches); that code is D3D-agnostic logic over device calls. So the VK
+build compiles all of `xrRenderDX10` except `dx10HW.cpp`, and the new code is the lowest layer only:
+own `xrvk::Device` / `xrvk::DeviceContext` / resource, view, shader, state and query classes that
+offer exactly the ~55 device/context methods the renderer calls (inventory in PROGRESS.md), named
+as the D3D11 types they stand for, implemented on Vulkan (VMA, shader objects, automatic
+layout/barrier tracking for the limited X-Ray usage). Not COM, no D3D11/dxvk code. `vkHW.cpp`
+replaces `dx10HW.cpp` (instance, NVIDIA selection, SDL3 surface, swapchain).
