@@ -239,3 +239,21 @@ Side note: the engine log shows the GTX 1650 Ti with AMD vendor id 1002 — that
   (Shader 3D Scopes) — DXC bug to reduce and work around (or report upstream).
 - Next: engine-side shader pipeline (port rules 1-2 to C++, SPIR-V reflection replacing D3DReflect),
   then stage 2a (render abstraction) — design to be agreed with the user before the split.
+
+## 2026-11-24 — stage 2, milestone M1 done (tag `stage2-m1` in monolith/, branch `stage-2-vk`)
+- `xrRender_VK` compiles the R4 pipeline, the shared layer and xrRenderDX10's logic **unchanged**
+  (0/227 TU errors, no edits to shared code): stand-in `d3d11.h`/`dxgi*.h`/`d3dcompiler.h`/`D3DX10*.h`
+  in `Layers/xrRenderVK/include` lead to `vkCommonTypes.h` — data types generated from the WIDL
+  headers (tools/gen_vk_d3d_types.py) and D3D11-named classes with non-virtual methods
+  (tools/gen_vk_d3d_interfaces.py). imgui's D3D11 backend is compiled into each renderer.
+- `xray_vk` links against libvulkan only (no dxvk/D3D/vkd3d libraries; ldd/nm checked). Remaining
+  header-level dependency: the engine-wide Win32 base types still come from dxvk-native's
+  windows_base.h (type-only; to be replaced by own header later).
+- The link left exactly the backend work list: 133 symbols (docs/vk/backend_methods_M1.txt) —
+  ID3D11DeviceContext 66, ID3D11Device 21, swapchain/DXGI ~10, shader reflection + compiler API,
+  CHW device setup. Each is defined in `vk_pending.gen.cpp` (tools/gen_vk_pending.py) to stop with
+  "vk: X not implemented"; implemented ones drop out when the file is regenerated.
+- Check: `xray` (R4/dxvk) behaves as before (boots to shader compilation, stops at the known
+  vkd3d gap); `xray_vk` boots through the engine to render-device creation and stops with
+  "vk: CHW::CreateDevice not implemented".
+Next: M2 — vkHW (Vulkan 1.3 instance/device on the NVIDIA GPU, SDL3 surface, swapchain, clear+present).
