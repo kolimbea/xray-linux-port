@@ -6,6 +6,9 @@ Rule 1 (SPIR-V needs immediate texel offsets): `T.Load(loc, offset)` on a Textur
    with a non-literal offset becomes `T.Load((loc) + int3/int4((offset), 0[, 0]))`. Load's offset is
    added to the integer texel coordinate, so this is exact (D3D11 Load ignores the offset for
    out-of-range handling the same way: the sum is what gets bounds-checked).
+Rule 2 (DXC accepts only integer literals in loop attributes): `[unroll(expr)]` / `[loop(expr)]` with a
+   non-literal count (FXC folded static const arrays there) becomes `[unroll]` / `[loop]`. The count is
+   only an unroll hint; results are unchanged.
 Usage: hlsl_rewrite.py <src-root> <dst-root>
 """
 import os, re, sys
@@ -52,6 +55,27 @@ def rewrite(text, kinds):
     out.append(text[pos:])
     return ''.join(out)
 
+ATTR = re.compile(r'\[\s*(unroll|loop)\s*\(')
+
+def rewrite_attrs(text):
+    out, pos = [], 0
+    for m in ATTR.finditer(text):
+        if m.start() < pos:
+            continue
+        args, end = split_args(text, m.end())  # balanced: the count may contain [] and ()
+        if args is None or len(args) != 1:
+            continue
+        k = end
+        while k < len(text) and text[k] in ' \t':
+            k += 1
+        if k >= len(text) or text[k] != ']' or re.fullmatch(r'\s*\d+\s*', args[0]):
+            continue
+        out.append(text[pos:m.start()])
+        out.append('[%s]' % m.group(1))
+        pos = k + 1
+    out.append(text[pos:])
+    return ''.join(out)
+
 def main(src, dst):
     files = []
     for d, _, fs in os.walk(src):
@@ -64,7 +88,7 @@ def main(src, dst):
             kinds.setdefault(n, k)
     changed = 0
     for f, t in texts.items():
-        n = rewrite(t, kinds)
+        n = rewrite_attrs(rewrite(t, kinds))
         o = os.path.join(dst, os.path.relpath(f, src))
         os.makedirs(os.path.dirname(o), exist_ok=True)
         open(o, 'w', encoding='latin-1', newline='').write(n)

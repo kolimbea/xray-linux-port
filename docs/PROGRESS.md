@@ -227,3 +227,15 @@ Side note: the engine log shows the GTX 1650 Ti with AMD vendor id 1002 — that
   `texture2D` (ssao_hbao.ps) and a duplicated input semantic (models_lfo_light_dot_weapons.ps).
 - Conclusion: DXC is viable for the whole set; the next check is GAMMA's shader overlay (MO2 mods)
   and the define variants the engine actually requests.
+
+### GAMMA shader set (same day)
+- Overlay built like MO2 does: Anomaly export, then the 19 enabled shader mods of profile G.A.M.M.A
+  from lowest to highest priority (modlist.txt: first line wins) -> build/shaders/gamma (662 r3 files).
+- Engine's SSFX_* quality defines added to the scan set (values as r4.cpp passes them).
+- Compat rule 2: `[unroll(expr)]`/`[loop(expr)]` with a non-literal count (Screen Space Shaders use
+  `q_steps[SSFX_WATER_QUALITY].x`) -> `[unroll]`/`[loop]`; DXC only accepts literals; hint only.
+- Result: **453 / 470** compile. The rest: the same non-standalone/case/define-variant files as in
+  Anomaly, the two FXC-leniency cases, and one **DXC crash (SIGSEGV)** on `scope_color_write.ps`
+  (Shader 3D Scopes) — DXC bug to reduce and work around (or report upstream).
+- Next: engine-side shader pipeline (port rules 1-2 to C++, SPIR-V reflection replacing D3DReflect),
+  then stage 2a (render abstraction) — design to be agreed with the user before the split.
