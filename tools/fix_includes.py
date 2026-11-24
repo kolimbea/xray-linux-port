@@ -70,6 +70,9 @@ def main():
     roots = [src, os.path.join(src, "..", "sdk", "include"), os.path.join(src, "3rd party")]
     # module directories are include roots too (vcxproj AdditionalIncludeDirectories use them)
     roots += [os.path.join(src, m) for m in sorted(os.listdir(src)) if os.path.isdir(os.path.join(src, m)) and m != "3rd party"]
+    # renderer projects live one level deeper (Layers/xrRender*) and are include roots of their own
+    layers = os.path.join(src, "Layers")
+    roots += [os.path.join(layers, m) for m in sorted(os.listdir(layers)) if os.path.isdir(os.path.join(layers, m))]
     idx = CaseIndex()
     stats = {"slash": 0, "case": 0, "files": 0}
     for dirpath, _, files in os.walk(src):
