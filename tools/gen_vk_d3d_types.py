@@ -14,7 +14,7 @@ import os, re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INC = os.path.join(ROOT, 'build/deps/dxvk-native-3.1.1/usr/include/dxvk')
 HEADERS = ['dxgiformat.h', 'dxgicommon.h', 'dxgitype.h', 'd3dcommon.h', 'dxgi.h', 'dxgi1_2.h', 'dxgi1_3.h',
-           'dxgi1_4.h', 'd3d11.h', 'd3d11_1.h', 'd3d11_2.h', 'd3d11shader.h']
+           'dxgi1_4.h', 'dxgi1_5.h', 'dxgi1_6.h', 'd3d11.h', 'd3d11_1.h', 'd3d11_2.h', 'd3d11shader.h']
 OUT = os.path.join(ROOT, 'monolith/src/Layers/xrRenderVK/vk_d3d_types.gen.h')
 
 def strip(t):

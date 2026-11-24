@@ -257,3 +257,23 @@ Side note: the engine log shows the GTX 1650 Ti with AMD vendor id 1002 — that
   vkd3d gap); `xray_vk` boots through the engine to render-device creation and stops with
   "vk: CHW::CreateDevice not implemented".
 Next: M2 — vkHW (Vulkan 1.3 instance/device on the NVIDIA GPU, SDL3 surface, swapchain, clear+present).
+
+## 2026-11-24 — stage 2, milestone M2 done (tag `stage2-m2`)
+- `xrVK_core` (Layers/xrRenderVK: vkCore, vkFormat, vkObjects, vkDevice, vkDXGI), engine-independent:
+  Vulkan 1.3 instance (SDL3 surface extensions, optional `XR_VK_VALIDATION=1`), GPU choice (discrete
+  with most VRAM first, `XR_VK_GPU` override), device with the ADR 0001 extensions/features checked,
+  VMA 3.3.0 + memory budget, 3 frames in flight on a timeline semaphore, whole-image layout tracking
+  with synchronization2 barriers.
+- DXGI/D3D11 objects on top: factory (adapters = Vulkan GPUs, preferred first), outputs = SDL displays
+  (mode lists from SDL), `D3D11CreateDevice`, swap chain (own back buffer blitted to the swapchain
+  image on Present, FIFO for sync interval 1, mailbox/immediate for 0, resize/out-of-date handling),
+  2D textures incl. typeless depth (D24S8, D32 fallback probed), RTV/DSV, clears, CopyResource incl.
+  GPU->staging readback, Map/Unmap of staging textures, user annotations ("no tool attached").
+- `dx10HW.cpp` now compiles unchanged in the VK build (device setup logic reused).
+- Check: tests/vk_smoke.cpp (target `vk_smoke`) with validation on: NVIDIA GTX 1650 Ti chosen among
+  3 Vulkan devices; cleared back buffer read back = (64,127,191,255) for (0.25,0.5,0.75,1); FIFO and
+  mailbox presents, resize; **0 validation errors**. In the game (`xray_vk`, validation on): device +
+  2560x1440 swapchain + base RT/ZB created, 0 validation errors; it stops at
+  "vk: ID3D11Device::CreateBuffer not implemented" (milestone M4 work). 105 methods pending.
+Next: M3 (shaders: DXC in-process + SPIR-V reflection + shader objects), then M4 (buffers, textures,
+states, draws -> main menu).
