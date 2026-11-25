@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <vector>
 #include <initializer_list>
 
 static int failures = 0;
@@ -249,6 +250,41 @@ int main()
     CHECK(l[0] == 0 && std::abs(int(l[1]) - 128) <= 1 && l[2] == 0 && l[3] == 255); // dynamic quad
     CHECK(r[0] == 0 && r[1] == 255 && r[2] == 0 && r[3] == 255);                    // rt0 sampled: green
     ctx->Unmap(staging, 0);
+
+    // the engine's "RAM textures": write-only staging textures (process memory) copied to the GPU on first
+    // use; 64x64 goes through the host heap, 512x512 (1 MB) through a buffer of its own
+    for (UINT size : {64u, 512u})
+    {
+        std::vector<uint32_t> texels(size * size);
+        for (UINT i = 0; i < texels.size(); ++i)
+            texels[i] = i * 2654435761u;
+        D3D11_TEXTURE2D_DESC sd{size, size, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, {1, 0}, D3D11_USAGE_STAGING, 0, D3D11_CPU_ACCESS_WRITE, 0};
+        const D3D11_SUBRESOURCE_DATA init{texels.data(), size * 4, 0};
+        ID3D11Texture2D *ram = nullptr, *gpu = nullptr, *back = nullptr;
+        CHECK(SUCCEEDED(dev->CreateTexture2D(&sd, &init, &ram)));
+        D3D11_TEXTURE2D_DESC gd = sd;
+        gd.Usage = D3D11_USAGE_DEFAULT;
+        gd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        gd.CPUAccessFlags = 0;
+        CHECK(SUCCEEDED(dev->CreateTexture2D(&gd, nullptr, &gpu)));
+        D3D11_TEXTURE2D_DESC bd = sd;
+        bd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        CHECK(SUCCEEDED(dev->CreateTexture2D(&bd, nullptr, &back)));
+        if (!ram || !gpu || !back)
+            break;
+        ctx->CopyResource(gpu, ram);
+        ram->Release(); // as ProcessStaging does right after the copy
+        ctx->CopyResource(back, gpu);
+        D3D11_MAPPED_SUBRESOURCE bm{};
+        CHECK(SUCCEEDED(ctx->Map(back, 0, D3D11_MAP_READ, 0, &bm)));
+        bool same = true;
+        for (UINT y = 0; y < size && same; ++y)
+            same = memcmp(static_cast<const uint8_t *>(bm.pData) + y * bm.RowPitch, texels.data() + y * size, size * 4) == 0;
+        CHECK(same);
+        ctx->Unmap(back, 0);
+        back->Release();
+        gpu->Release();
+    }
 
     for (IUnknown *o : std::initializer_list<IUnknown *>{staging, bs, rs, dss, dsv, ztex, rt0_srv, rtv1, rtv0, rt1, rt0, smp, tex_srv, tex,
                                                         cb_ps, cb_vs, dvb, ib, vb, layout, sig, ps, vs, psb, vsb})
