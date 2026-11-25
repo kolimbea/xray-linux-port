@@ -339,3 +339,13 @@ draws with dynamic rendering -> main menu.
 - Open: the fixture is plain Anomaly data; the GAMMA engine source expects GAMMA's UI XML (starting a
   new game stops at `:counter` in ui\maingame_16.xml). Next: a GAMMA fixture (MO2 mod order as a
   read-only overlay), then loading a level (stage 2d+).
+
+## 2026-11-25 — GAMMA data, first level load (in progress)
+- tools/make_fixture_gamma.py: GAMMA's MO2 profile (574 enabled mods + overwrite) as a read-only symlink
+  overlay in build/fixture-gamma (61447 files). GAMMA 0.9.5's main menu renders on the Vulkan renderer.
+- Level load: `xray_vk -nointro -start "server(autotest/single/alife/load) client(localhost)"` with a
+  copy of a save as appdata/savedgames/autotest.*. It stops compiling models_lfo_light_dot_weapons.ps:
+  DXC rejects the duplicate input semantic TEXCOORD0 (struct p_flat + parameter `tc0`; FXC accepts it).
+- Next step (planned): compat rule 3 in D3DCompile, applied on DXC's "input semantic 'X' used more than
+  once" error: locate the parameter via the `#line "<file>"` markers of the preprocessed text (format
+  `#line N "hlsl.hlsl"`), drop it if the function body never reads it, recompile.
