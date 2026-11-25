@@ -56,8 +56,10 @@ Saves, logs and screenshots go to `build/fixture-gamma/appdata`.
 
 ## Licence
 
-The engine is GSC Game World code under the terms in `License.txt` of the engine repository:
-redistribution with the notice, **non-commercial use only**. The same applies to this port.
-Third-party components keep their own licences.
+- The engine repository (including the Vulkan renderer in `src/Layers/xrRenderVK`) is GSC Game World
+  code under the terms in its `License.txt`: redistribution with the notice, **non-commercial use only**.
+- The files of this repository (docs, tests, tools) are published without an open-source licence: you
+  may read them here; any other use needs the author's permission.
+- Third-party components keep their own licences.
 
 Progress and open issues: [STATUS.md](STATUS.md), [docs/PROGRESS.md](docs/PROGRESS.md).
