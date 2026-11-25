@@ -26,6 +26,8 @@ PROFILE = os.path.join(MO2, 'profiles', 'G.A.M.M.A')
 LINKED = ('db', 'gamedata')
 APPDATA_SKIP = ('savedgames', 'logs', 'shaders_cache', 'screenshots', 'reshade-shaders')
 # windowed, always rendering (the engine only renders while its window is active), a fixed size
+# files the game writes inside gamedata (MO2 sends those writes to overwrite/): copies, not links
+WRITABLE = ('gamedata/configs/axr_options.ltx',)
 USER_OVERRIDES = {'g_always_active': 'on', 'rs_screenmode': 'windowed', 'vid_mode': '1280x720'}
 
 
@@ -81,7 +83,10 @@ def main():
     for rel, src in winners.items():
         dst = os.path.join(OUT, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        os.symlink(src, dst)
+        if rel in WRITABLE:
+            shutil.copyfile(src, dst)
+        else:
+            os.symlink(src, dst)
     for rel, src in appdata.items():
         dst = os.path.join(OUT, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
