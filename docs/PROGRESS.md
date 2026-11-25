@@ -391,3 +391,12 @@ draws with dynamic rendering -> main menu.
 - tools/play_native.sh starts the native build on the fixture (desktop shortcut
   "S.T.A.L.K.E.R. GAMMA (Linux, Vulkan)"); F12 screenshots work (PNG in fixture appdata/screenshots).
 - Tests: tests/vk_heap.cpp (host heap); vk_draw checks a failed CreateInputLayout clears its output.
+- Draw path: unchanged program lookups and identical descriptor pushes are skipped (1280x720: 26.3 ->
+  23.5 ms/frame); SRVs whose view type differs from the shader declaration read as unbound (D3D11).
+- Memory (Bar, player settings 2560x1440): VRAM ~3.3 GB (textures 2.3-2.5 GB, render targets 0.74 GB,
+  buffers 0.17 GB) — fits the 4 GB GPU; GPU time there is resolution-bound (~4x the 720p time).
+  GAMMA's `r__no_ram_textures off` keeps ~5.5 GB of staging copies of not-yet-used textures (same
+  design as on Windows); they are now plain process memory instead of pinned driver memory
+  (RssShmem 8.4 -> 1.2 GB). `texture_lod 2` saves ~1 GB. VK_EXT_pageable_device_local_memory was
+  tried (NVIDIA 620.70): no change in placement or GPU time, not kept. No leak over 8-minute runs.
+- Benchmarks use `-ltx user_bench.ltx` (fixture tool writes it); the player's user.ltx is kept.
