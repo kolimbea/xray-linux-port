@@ -51,6 +51,40 @@ int main()
     expect("empty", "", "");
     expect("both rules", decl + "[unroll(n)] x = s_a.Load(c, o);", decl + "[unroll] x = s_a.Load((c) + int3((o), 0));");
 
+    // rule 3: drop an unused parameter whose input semantic duplicates another one
+    {
+        const std::string pre = "#line 1 \"hlsl.hlsl\"\n#line 1 \"./inc.h\"\nstruct p_flat { float2 tc : TEXCOORD0; };\n#line 2 \"hlsl.hlsl\"\n"
+                                "float4 main (p_flat I, float4 pos2d: SV_Position, float2 tc0: TEXCOORD0): SV_Target\n{ return pos2d; }\n";
+        // DXC reports the column of the semantic: line 2 of hlsl.hlsl
+        const size_t col = std::string("float4 main (p_flat I, float4 pos2d: SV_Position, float2 tc0: ").size() + 1;
+        const std::string diag = "hlsl.hlsl:2:" + std::to_string(col) + ": error: input semantic 'TEXCOORD0' used more than once\n";
+        std::string text = pre;
+        const bool changed = xrvk::hlsl::drop_unused_duplicate_input(text, diag);
+        const std::string want = "#line 1 \"hlsl.hlsl\"\n#line 1 \"./inc.h\"\nstruct p_flat { float2 tc : TEXCOORD0; };\n#line 2 \"hlsl.hlsl\"\n"
+                                 "float4 main (p_flat I, float4 pos2d: SV_Position): SV_Target\n{ return pos2d; }\n";
+        if (!changed || text != want)
+        {
+            printf("FAIL rule 3 (unused duplicate)\n  got: %s\n", text.c_str());
+            ++failures;
+        }
+        // the body reads it: unchanged
+        std::string used = pre;
+        used.replace(used.find("return pos2d;"), 13, "return tc0.xyxy;");
+        const std::string before = used;
+        if (xrvk::hlsl::drop_unused_duplicate_input(used, diag) || used != before)
+        {
+            printf("FAIL rule 3 must keep a used parameter\n");
+            ++failures;
+        }
+        // other diagnostics: unchanged
+        std::string other = pre;
+        if (xrvk::hlsl::drop_unused_duplicate_input(other, "hlsl.hlsl:2:5: error: something else\n"))
+        {
+            printf("FAIL rule 3 must ignore other errors\n");
+            ++failures;
+        }
+    }
+
     printf(failures ? "FAILED (%d)\n" : "all checks passed\n", failures);
     return failures ? 1 : 0;
 }
