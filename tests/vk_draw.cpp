@@ -99,6 +99,13 @@ int main()
                                               {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}};
     ID3D11InputLayout *layout = nullptr;
     CHECK(SUCCEEDED(dev->CreateInputLayout(elems, 2, sig->GetBufferPointer(), sig->GetBufferSize(), &layout)));
+    {
+        // a layout missing an input the shader reads fails and clears the output (D3D11): the engine
+        // (CBackend::ApplyVertexLayout) does not check the result and binds whatever it got
+        ID3D11InputLayout *bad = reinterpret_cast<ID3D11InputLayout *>(uintptr_t(0x40000004d));
+        CHECK(FAILED(dev->CreateInputLayout(elems, 1, sig->GetBufferPointer(), sig->GetBufferSize(), &bad)));
+        CHECK(bad == nullptr);
+    }
 
     // geometry: a static full-screen quad (indexed) and a dynamic copy of it nearer to the camera
     const Vertex quad[4] = {{-1, -1, 0.5f, 0, 1}, {-1, 1, 0.5f, 0, 0}, {1, 1, 0.5f, 1, 0}, {1, -1, 0.5f, 1, 1}};
