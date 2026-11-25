@@ -315,3 +315,27 @@ states, draws -> main menu).
   84 backend methods pending (was 105).
 Next: M4 — buffers, textures/SRVs, samplers and states, constants, input layouts -> vertex input,
 draws with dynamic rendering -> main menu.
+
+## 2026-11-25 — stage 2, milestone M4 done: main menu on the own Vulkan renderer (tag `stage2-m4`)
+- Backend complete for what the renderer calls (vk_pending: 0 methods): host heap for dynamic
+  buffer versions/upload staging (VMA virtual blocks, freed on the frame timeline), upload command
+  buffer per frame, deferred destruction; textures 1D/2D/3D (Image in GENERAL layout), SRV/RTV/DSV/UAV,
+  states, input layouts; immediate context with the full D3D11 state, lazy dynamic rendering, shader
+  objects + push descriptors with null resources, dynamic vertex input and state; clears, copies,
+  resolve, Map/Unmap, UpdateSubresource; event/occlusion queries; DXGI gamma = NOT_CURRENTLY_AVAILABLE
+  (windowed, as DXGI); IDXGIDevice for imgui.
+- Synchronisation is coarse on purpose (full barrier per rendering scope, around transfers and
+  dispatches): correct first, the performance track refines it.
+- tests/vk_draw: two passes (render to texture, sample it), static/dynamic VB, IB, cbuffers in VS/PS,
+  texture + sampler, depth; pixel checks pass with 0 validation errors on NVIDIA, RADV, llvmpipe.
+- In the game (fixture-anomaly, 1280x720 windowed): the main menu renders completely, text included,
+  0 validation errors (XR_VK_VALIDATION=1). Frame capture: XR_VK_SCREENSHOT=<png> XR_VK_SCREENSHOT_FRAME=<n>.
+- Engine portability bugs found on the way (affect the R4 build as well):
+  `this == 0` checks removed by clang (-> -fno-delete-null-pointer-checks), REG_PRIORITY_* `ul`
+  constants vs int priorities under LP64 (removed listeners kept being called), window activation
+  on Wayland (activate on SDL_EVENT_WINDOW_SHOWN like WM_ACTIVATE), DXGI_PRESENT_TEST.
+- Test setup: the engine renders only while its window is active; fixture appdata/user.ltx sets
+  `g_always_active on`, `rs_screenmode windowed`, `vid_mode 1280x720`.
+- Open: the fixture is plain Anomaly data; the GAMMA engine source expects GAMMA's UI XML (starting a
+  new game stops at `:counter` in ui\maingame_16.xml). Next: a GAMMA fixture (MO2 mod order as a
+  read-only overlay), then loading a level (stage 2d+).
