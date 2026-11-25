@@ -349,3 +349,18 @@ draws with dynamic rendering -> main menu.
 - Next step (planned): compat rule 3 in D3DCompile, applied on DXC's "input semantic 'X' used more than
   once" error: locate the parameter via the `#line "<file>"` markers of the preprocessed text (format
   `#line N "hlsl.hlsl"`), drop it if the function body never reads it, recompile.
+
+## 2026-11-25 — first level runs (Bar, GAMMA save), stability fixes
+- Level load from a copy of the user's save (`-start "server(autotest/single/alife/load) client(localhost)"`),
+  NPCs, HUD, minimap, lighting render; a tour script (fixture-only gamedata/scripts/zz_autotest_tour.script)
+  teleports the actor between stalker positions while XR_VK_SCREENSHOT_EVERY captures frames.
+- Engine portability fixes on the way: HLSL compat rule 3 (unused duplicate input semantic), sprintf into
+  its own buffer (HUD ":counter"), entity replication in ID order (actor before NPCs), double destruction
+  in HUD_SOUND_COLLECTION_LAYERED.
+- Backend threading: the immediate context is serialised like D3D11 (texture loads run on tbb workers);
+  upload command buffers no longer belong to frame slots (race with next_frame / pool reset) — the
+  driver crashes in vkQueueSubmit/vkCmdCopyBuffer are gone (20 min runs without a crash).
+- Open: intermittent crash after ODE "LCP internal error" (physics, not reproduced under gdb);
+  CBaseMonster::Die -> set_override_animation crash (seen once); validation: some VS/PS pairs where the
+  PS reads a semantic the VS does not write, and a cube SRV bound where a shader declares another type;
+  tour teleports stop moving the actor after a few points (script/game-state, not rendering).
