@@ -7,7 +7,8 @@ order, then MO2's overwrite/ folder. The install is only read.
   overlay merges like MO2 does on Windows (case-insensitive); the engine's Linux FS resolves names
   case-insensitively as well.
 - appdata/: copies of the winning *.ltx/config files (the engine writes there, a symlink would write into
-  the install); saves, logs and shader caches are not taken. user.ltx gets the test overrides below.
+  the install); saves, logs and shader caches are not taken. An existing user.ltx (the player's) is kept;
+  user_bench.ltx = user.ltx + the test overrides below, for runs with `-ltx user_bench.ltx`.
 - fsgame.ltx: Anomaly's.
 
 modlist.txt lists mods highest priority first; "+" = enabled; "*_separator" entries are not mods.
@@ -30,6 +31,17 @@ APPDATA_SKIP = ('savedgames', 'logs', 'shaders_cache', 'screenshots', 'reshade-s
 WRITABLE = ('gamedata/configs/axr_options.ltx',)
 USER_OVERRIDES = {'g_always_active': 'on', 'rs_screenmode': 'windowed', 'vid_mode': '1280x720',
                   'keypress_on_start': 'off'}  # no "press any key" after loading
+
+
+def write_bench_config(out):
+    """appdata/user_bench.ltx: the player's user.ltx with the test overrides, for runs started with
+    `-ltx user_bench.ltx` (benchmarks, autotests); user.ltx itself is left to the player."""
+    user = os.path.join(out, 'appdata', 'user.ltx')
+    lines = open(user, encoding='latin-1').read().splitlines() if os.path.exists(user) else []
+    kept = [l for l in lines if l.split(' ', 1)[0] not in USER_OVERRIDES]
+    kept += [f'{k} {v}' for k, v in USER_OVERRIDES.items()]
+    with open(os.path.join(out, 'appdata', 'user_bench.ltx'), 'w', encoding='latin-1') as f:
+        f.write('\n'.join(kept) + '\n')
 
 
 def enabled_mods():
@@ -90,17 +102,14 @@ def main():
             os.symlink(src, dst)
     for rel, src in appdata.items():
         dst = os.path.join(OUT, rel)
+        if rel == os.path.join('appdata', 'user.ltx') and os.path.exists(dst):
+            continue  # the player's settings of earlier runs (tools/play_native.sh) win over the install's
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copyfile(src, dst)
     os.makedirs(os.path.join(OUT, 'appdata', 'logs'), exist_ok=True)
     shutil.copyfile(os.path.join(ANOMALY, 'fsgame.ltx'), os.path.join(OUT, 'fsgame.ltx'))
 
-    user = os.path.join(OUT, 'appdata', 'user.ltx')
-    lines = open(user, encoding='latin-1').read().splitlines() if os.path.exists(user) else []
-    kept = [l for l in lines if l.split(' ', 1)[0] not in USER_OVERRIDES]
-    kept += [f'{k} {v}' for k, v in USER_OVERRIDES.items()]
-    with open(user, 'w', encoding='latin-1') as f:
-        f.write('\n'.join(kept) + '\n')
+    write_bench_config(OUT)
 
     layers_with_files = sum(1 for _, n in counts if n)
     print(f'{len(counts)} layers ({layers_with_files} with files), {len(winners)} linked files, '
