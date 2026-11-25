@@ -28,7 +28,8 @@ APPDATA_SKIP = ('savedgames', 'logs', 'shaders_cache', 'screenshots', 'reshade-s
 # windowed, always rendering (the engine only renders while its window is active), a fixed size
 # files the game writes inside gamedata (MO2 sends those writes to overwrite/): copies, not links
 WRITABLE = ('gamedata/configs/axr_options.ltx',)
-USER_OVERRIDES = {'g_always_active': 'on', 'rs_screenmode': 'windowed', 'vid_mode': '1280x720'}
+USER_OVERRIDES = {'g_always_active': 'on', 'rs_screenmode': 'windowed', 'vid_mode': '1280x720',
+                  'keypress_on_start': 'off'}  # no "press any key" after loading
 
 
 def enabled_mods():
