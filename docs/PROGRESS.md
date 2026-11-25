@@ -364,3 +364,30 @@ draws with dynamic rendering -> main menu.
   CBaseMonster::Die -> set_override_animation crash (seen once); validation: some VS/PS pairs where the
   PS reads a semantic the VS does not write, and a cube SRV bound where a shader declares another type;
   tour teleports stop moving the actor after a few points (script/game-state, not rendering).
+
+## 2026-11-25 — memory errors (ASan) and first performance pass
+- AddressSanitizer build (`build/asan`, `-fsanitize=address -fsanitize-recover=address`; LuaJIT is built
+  without instrumentation, it reads strings word-wise by design; run with
+  `ASAN_OPTIONS=detect_leaks=0:alloc_dealloc_mismatch=0`). Found and fixed: the Linux `strncpy_s` shim read
+  one byte past a source of exactly `num` chars; ODE `dInternalStepIsland_x2` indexed `ofs[-1]` for an
+  inactive joint (stack read; the likely source of the "LCP internal error" crash after monster deaths).
+  Left: a 2-byte over-read in `IReader::find_chunk` on short THM files (reads, no corruption).
+- Frame stats (every 600 presents in the engine log, `* vk stats:`) now hold GPU time per frame from
+  timestamps, submits, waits for a frame slot and query polls answered "not ready".
+- Benchmark: the Bar, GAMMA save, 1280x720, vsync off, ~4400 draws/frame; the main thread is CPU-bound
+  (GPU ~10.5 ms of the frame). Profiles with tools/pmp.sh (eu-stack sampling; perf is not installed).
+  | change | ms/frame |
+  |---|---|
+  | start | 41.0 |
+  | frames submitted in parts (512 draws), several command buffers per frame slot: the R4 light occlusion tests read their queries in the same frame and the first GetData had flushed half a frame and spun ~31000 times until the GPU caught up | 32.3 |
+  | small host heap slices (constant buffers) bump-allocated in linear pages instead of VMA virtual TLSF blocks | 26.3 |
+- Next hotspots: the program lookup and descriptor push on every draw (prepare ~2.7 ms/frame), the
+  context lock on every D3D call, then engine-side (Lua scheduler ~35 %, sun cascades, dx10ConstantBuffer).
+- Crash fixed (the intermittent "corrupted Context::layout", seen twice): CBackend::ApplyVertexLayout
+  does not check CreateInputLayout and bound the uninitialised pointer when it failed; every backend
+  Create* now clears its output first, as D3D11 does. The failing layout is GAMMA's velocity input
+  (`P_prev : POSITIONT`) on geometry that has no such stream; D3D11 rejects it too, so the draw is skipped
+  as on Windows.
+- tools/play_native.sh starts the native build on the fixture (desktop shortcut
+  "S.T.A.L.K.E.R. GAMMA (Linux, Vulkan)"); F12 screenshots work (PNG in fixture appdata/screenshots).
+- Tests: tests/vk_heap.cpp (host heap); vk_draw checks a failed CreateInputLayout clears its output.
