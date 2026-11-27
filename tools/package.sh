@@ -35,9 +35,8 @@ flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakr
 # the published manifest and PKGBUILD point at the release URL
 "$P/store_files.sh" "$TAG"
 
-VER=${TAG#v}; VER=${VER//-/\~}
 ASSETS=("$D/xray-native-$TAG-linux-x86_64.tar.gz" "$D/xray-native-$TAG-x86_64.AppImage"
-        "$D/xray-native_${VER}_amd64.deb" "$D/xray-native-$TAG.flatpak")
+        "$D/xray-native-$TAG-amd64.deb" "$D/xray-native-$TAG.flatpak")
 for a in "${ASSETS[@]}"; do ls -la "$a" "$a.sha256"; done
 
 if [ "$PUBLISH" = 1 ]; then

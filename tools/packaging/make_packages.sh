@@ -3,7 +3,8 @@
 # Debian 13 container:
 #   build/dist/xray-native-<tag>-linux-x86_64.tar.gz   self-contained package (the launcher's update unit)
 #   build/dist/xray-native-<tag>-x86_64.AppImage         one file, runs the launcher
-#   build/dist/xray-native_<ver>_amd64.deb               installs to /opt/xray-native
+#   build/dist/xray-native-<tag>-amd64.deb               installs to /opt/xray-native (no "~" in the
+#                                                        file name: GitHub would rename the asset)
 # plus .sha256 files. Self-contained: libraries the distributions name or version differently (SDL3,
 # oneTBB, ICU, OpenSSL, OpenAL, Ogg/Vorbis/Theora, libjpeg, giflib) are bundled in lib/ and found through
 # RUNPATH $ORIGIN/../lib; glibc, libstdc++, the Vulkan loader, GPU drivers and the X11/Wayland/audio
@@ -125,7 +126,7 @@ Description: Native Linux build of the X-Ray Monolith engine (S.T.A.L.K.E.R. Ano
  Vulkan renderer, launcher with updates and a Mod Organizer 2 overlay builder. Needs an installed
  Anomaly + GAMMA, which it never modifies.
 EOF
-fakeroot dpkg-deb --root-owner-group -Zxz --build $D build/dist/xray-native_${VER}_amd64.deb > /dev/null
+fakeroot dpkg-deb --root-owner-group -Zxz --build $D build/dist/xray-native-$TAG-amd64.deb > /dev/null
 
 # AppImage: AppDir = the package + AppRun + desktop entry + icon
 A=$STAGE/AppDir
@@ -144,6 +145,6 @@ ARCH=x86_64 build/deps/appimagetool-1.9.0/appimagetool-x86_64.AppImage --appimag
     || { echo "appimagetool failed"; exit 1; }
 
 cd build/dist
-for f in $ASSET xray-native-$TAG-x86_64.AppImage xray-native_${VER}_amd64.deb; do sha256sum $f > $f.sha256; done
-ls -la $ASSET xray-native-$TAG-x86_64.AppImage xray-native_${VER}_amd64.deb
+for f in $ASSET xray-native-$TAG-x86_64.AppImage xray-native-$TAG-amd64.deb; do sha256sum $f > $f.sha256; done
+ls -la $ASSET xray-native-$TAG-x86_64.AppImage xray-native-$TAG-amd64.deb
 '

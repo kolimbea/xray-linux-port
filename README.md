@@ -11,7 +11,7 @@ tried. Other GPUs and drivers have not been tested in the game.
 ## Install (players)
 
 Download the AppImage, .deb, tar.gz or Flatpak from
-[Releases](https://github.com/kolimbea/xray-linux-port/releases) (Arch: AUR `xray-native-bin`), start
+[Releases](https://github.com/kolimbea/xray-linux-port/releases) (Arch: `tools/packaging/aur/PKGBUILD`), start
 the launcher, point it at your GAMMA folder and press Play. Step by step: [docs/INSTALL.md](docs/INSTALL.md)
 · по-русски: [docs/INSTALL.ru.md](docs/INSTALL.ru.md).
 

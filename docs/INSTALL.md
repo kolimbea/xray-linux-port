@@ -15,8 +15,8 @@ build only reads that installation and never modifies it. Russian: [INSTALL.ru.m
 |---|---|
 | AppImage | `chmod +x xray-native-*-x86_64.AppImage && ./xray-native-*-x86_64.AppImage` |
 | tar.gz | `tar xf xray-native-<ver>-linux-x86_64.tar.gz && ./xray-native/bin/xray-launcher` |
-| Debian/Ubuntu | `sudo apt install ./xray-native_<ver>_amd64.deb`, then `xray-launcher` or the menu entry |
-| Arch (AUR) | `yay -S xray-native-bin` |
+| Debian/Ubuntu | `sudo apt install ./xray-native-<ver>-amd64.deb`, then `xray-launcher` or the menu entry |
+| Arch | `xray-native-bin` (AUR publication pending): `cd tools/packaging/aur && makepkg -si` |
 | Flatpak | `flatpak install --user xray-native-<ver>.flatpak && flatpak run io.github.kolimbea.XrayNative` |
 
 The Flatpak sees home, `/mnt`, `/media` and `/run/media` read-only; its data is in

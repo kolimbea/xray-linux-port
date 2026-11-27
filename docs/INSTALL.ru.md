@@ -28,12 +28,17 @@ tar xf xray-native-<версия>-linux-x86_64.tar.gz
 
 ## Способ 3. Debian / Ubuntu (.deb)
 ```
-sudo apt install ./xray-native_<версия>_amd64.deb
+sudo apt install ./xray-native-<версия>-amd64.deb
 ```
 Лаунчер появится в меню приложений («S.T.A.L.K.E.R. GAMMA (native)») и как команда `xray-launcher`.
 
-## Способ 4. Arch / Manjaro (AUR)
-Пакет `xray-native-bin`: `yay -S xray-native-bin` (или `paru -S xray-native-bin`).
+## Способ 4. Arch / Manjaro
+Пакет `xray-native-bin` готовится к публикации в AUR. Пока можно собрать его из репозитория:
+```
+git clone https://github.com/kolimbea/xray-linux-port && cd xray-linux-port/tools/packaging/aur
+makepkg -si
+```
+(или просто используйте AppImage).
 
 ## Способ 5. Flatpak
 ```
