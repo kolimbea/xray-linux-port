@@ -15,6 +15,12 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
 - Current work (2026-11-27): roadmap of docs/technical-audit/ROADMAP.md — phase 1 and most of phase 2
   done (status table at its end). Next: packaging, Tracy, AMD/Intel tests, SSFX AO, full-screen
   measurements with the display on (OPEN_QUESTIONS Q18), CI activation (branch ci-workflow).
+- User-reported bugs to fix next (2026-11-27): the sky "lags" (stutters/flickers), the player health
+  widget in the bottom-left corner renders wrong; then test every graphics setting (presets, SSAO modes,
+  sun quality, MSAA, tessellation, SSFX options) and fix shader errors found.
+- Screenshot tour (fixture only): gamedata/scripts/zz_shot_tour.script, active while
+  appdata/shot_tour.txt exists; config appdata/user_shots.ltx; run with -dbg (g_god) and
+  XR_VK_SCREENSHOT_EVERY; frames in build/shots/.
 - `monolith/` and `openxray/` are upstream clones, excluded from this docs repo.
 - Published 2026-11-25 (public): https://github.com/kolimbea/xray-linux-port (this repo, remote
   `origin`) and https://github.com/kolimbea/xray-monolith-linux branch `stage-2-vk` (remote `kolimbea` in
