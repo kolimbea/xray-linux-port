@@ -12,6 +12,9 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   stage 2 (ADR 0001): M1–M4 done: the main menu renders on the own Vulkan renderer (0 validation errors,
   tag stage2-m4). Next: GAMMA data fixture (MO2 overlay), then levels.
   Engine work: `monolith/` branch `stage-2-vk`.
+- Current work (2026-11-27): roadmap of docs/technical-audit/ROADMAP.md — phase 1 and most of phase 2
+  done (status table at its end). Next: packaging, Tracy, AMD/Intel tests, SSFX AO, full-screen
+  measurements with the display on (OPEN_QUESTIONS Q18), CI activation (branch ci-workflow).
 - `monolith/` and `openxray/` are upstream clones, excluded from this docs repo.
 - Published 2026-11-25 (public): https://github.com/kolimbea/xray-linux-port (this repo, remote
   `origin`) and https://github.com/kolimbea/xray-monolith-linux branch `stage-2-vk` (remote `kolimbea` in
