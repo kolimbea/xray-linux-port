@@ -61,7 +61,9 @@ descriptor buffers; multiplayer; ReShade port.
 |---|---|---|
 | 1.1 crash reports | **done**: `logs/crash_<unix time>.log` with an async-signal-safe native stack, then the engine log; `alarm(10)` ends a hung handler | monolith 646e745; SIGTERM test wrote a report with the stack |
 | 1.3 Lua `require` | **done**: searcher for Windows-style package.path modules; Useful Idiots loads | monolith 5793f62; remaining 5 script failures are GAMMA's own (patches of mods that are disabled in the profile, a C-style comment in a .script) |
-| 1.4 clean shutdown | **cause found**, not fixed yet: quitting a level corrupts the heap (`free()` abort in `CSpaceRestrictionComposition::~` from `CLevel::remove_objects`); the handler used to deadlock on it — now the process ends within ~11 s | crash report stack |
+| 1.4 clean shutdown | **done**: three causes found with ASan and fixed — use-after-free when space-restriction bridges were deleted in map order (1146e06), DirectInput stand-ins without reference counts (6eb6f81), log mutex destroyed while threads still logged at exit (4e31c8a); SIGTERM in a level: exit code 0 after 6 s, three runs, no crash report | monolith 1146e06, 6eb6f81, 4e31c8a |
+| — | **done**: two more ASan reads past buffers (short OGG comments, THM chunk header at the end of a file) | monolith c818bf5 |
+| — | **done**: per-draw timing sampled (two clock reads per draw cost ~20 ms/frame on the HPET clocksource): 720p 47.7 → 29.0 ms/frame on this machine's current clocksource | monolith 1b9cf29 |
 | 1.5 gamma/brightness | **done**: curve applied by a present-time compute pass; brightness 1.5 raised mean luminance 35.8 → 70.0 | monolith bb75516 |
 | 1.6 CI | **written**, not active: the gh token lacks the `workflow` scope; commits on branch `ci-workflow` | root 3a579a1, 42a996a |
 | — | **done**: `-dbg` crash (va_list reused by vsprintf) | monolith 6446e2f |

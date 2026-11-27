@@ -400,3 +400,13 @@ draws with dynamic rendering -> main menu.
   (RssShmem 8.4 -> 1.2 GB). `texture_lod 2` saves ~1 GB. VK_EXT_pageable_device_local_memory was
   tried (NVIDIA 620.70): no change in placement or GPU time, not kept. No leak over 8-minute runs.
 - Benchmarks use `-ltx user_bench.ltx` (fixture tool writes it); the player's user.ltx is kept.
+
+## 2026-11-27 (night) — audit, then phase 1-2 of the roadmap
+- Technical audit: docs/technical-audit/ (current state, architecture, technology research, roadmap).
+- Lua `require` with Windows package.path entries (Useful Idiots mod loads), `-dbg` crash (va_list
+  reused), gamma/brightness/contrast at Present, crash reports that survive a corrupted heap
+  (logs/crash_<time>.log), clean shutdown (three memory bugs found with ASan), two ASan over-reads,
+  FSR 1 upscaling with a window-sized swapchain, optional dxvk path, CI workflow (branch ci-workflow,
+  needs a token with the `workflow` scope), tools/run_level.sh.
+- Measurement caveats: this machine runs on the HPET clocksource since 2026-11-26 (TSC marked
+  unstable); full-screen numbers with the display off are not trusted (OPEN_QUESTIONS Q17, Q18).
