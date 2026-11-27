@@ -1,0 +1,48 @@
+# Linux build of the native port: engine (kolimbea/xray-monolith, branch stage-2-vk) + backend tests on
+# Mesa's software Vulkan driver (lavapipe) under Xvfb. No game data is involved.
+name: linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: fedora:44
+    timeout-minutes: 240
+    steps:
+      - name: Packages
+        run: >
+          dnf install -y --setopt=install_weak_deps=False
+          clang cmake ninja-build python3 git curl tar xz which
+          SDL3-devel tbb-devel openal-soft-devel libvorbis-devel libtheora-devel libjpeg-turbo-devel
+          libicu-devel openssl-devel giflib-devel vulkan-headers vulkan-loader-devel
+          VulkanMemoryAllocator-devel mesa-vulkan-drivers xorg-x11-server-Xvfb
+
+      - uses: actions/checkout@v4
+
+      - name: Engine sources
+        run: git clone --depth 1 --branch stage-2-vk https://github.com/kolimbea/xray-monolith monolith
+
+      - name: Third-party pieces (pinned, checksummed)
+        run: tools/fetch_deps.sh
+
+      - name: Configure
+        run: cmake -S monolith -B build/monolith -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+
+      - name: Build backend tests
+        run: ninja -C build/monolith vk_smoke vk_draw vk_heap vk_hlsl_rewrite
+
+      - name: Backend tests (lavapipe, validation off — no layer installed)
+        run: |
+          build/monolith/vk_hlsl_rewrite
+          export VK_DRIVER_FILES=$(ls /usr/share/vulkan/icd.d/lvp_icd*.json | head -1)
+          for t in vk_heap vk_draw vk_smoke; do
+            xvfb-run -a -s "-screen 0 1280x720x24" build/monolith/$t
+          done
+
+      - name: Build the game
+        run: ninja -C build/monolith xray_vk
