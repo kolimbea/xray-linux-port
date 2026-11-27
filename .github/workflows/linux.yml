@@ -1,4 +1,4 @@
-# Linux build of the native port: engine (kolimbea/xray-monolith, branch stage-2-vk) + backend tests on
+# Linux build of the native port: engine (kolimbea/xray-monolith-linux, branch stage-2-vk) + backend tests on
 # Mesa's software Vulkan driver (lavapipe) under Xvfb. No game data is involved.
 name: linux
 
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Engine sources
-        run: git clone --depth 1 --branch stage-2-vk https://github.com/kolimbea/xray-monolith monolith
+        run: git clone --depth 1 --branch stage-2-vk https://github.com/kolimbea/xray-monolith-linux monolith
 
       - name: Third-party pieces (pinned, checksummed)
         run: tools/fetch_deps.sh
