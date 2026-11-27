@@ -69,4 +69,5 @@ descriptor buffers; multiplayer; ReShade port.
 | — | **done**: `-dbg` crash (va_list reused by vsprintf) | monolith 6446e2f |
 | 2.1 FSR 1 | **done**: swapchain at window size, EASU+RCAS at Present; `vk_smoke` checks the path (0 validation errors) | monolith 8cee8df |
 | 2.6 benchmark harness | **done**: `tools/run_level.sh` | root b6e2387 |
+| 2.4 ThinLTO | **done**: option `XR_THINLTO`; A/B twice at 720p: 30.05/29.05 → 28.72/27.52 ms/frame (~4.5 %) | monolith 92ee3b4 |
 | legacy dxvk path | **optional, off by default** (`XR_BUILD_DXVK_RENDERER`) | monolith cac9e02 |

@@ -38,9 +38,10 @@ git clone https://github.com/kolimbea/xray-linux-port
 cd xray-linux-port
 git clone -b stage-2-vk https://github.com/kolimbea/xray-monolith-linux monolith
 tools/fetch_deps.sh            # pinned, checksummed third-party pieces (DXC, ...) into build/deps
-cmake -S monolith -B build/monolith -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake -S monolith -B build/monolith -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DXR_THINLTO=ON
 ninja -C build/monolith xray_vk vk_smoke vk_draw vk_heap
 build/monolith/vk_draw         # backend tests; XR_VK_VALIDATION=1 enables the validation layer
+# XR_THINLTO (~4.5 % faster frames) needs clang's LLVMgold plugin (bfd-plugins) or lld; drop it otherwise
 ```
 
 ## Running with GAMMA
