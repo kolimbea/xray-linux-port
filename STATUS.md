@@ -2,7 +2,8 @@
 
 Goal: native Linux + Vulkan build of X-Ray Monolith (Anomaly/GAMMA engine).
 Plan: [docs/PLAN.md](docs/PLAN.md) · Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
-Log: [docs/PROGRESS.md](docs/PROGRESS.md).
+Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-11-27):
+[docs/technical-audit/EXECUTIVE_SUMMARY.md](docs/technical-audit/EXECUTIVE_SUMMARY.md).
 
 - Stage 0 done. Stage 1a done: `libxrCore.so` builds with clang and mounts the Anomaly archives.
   Stage 1b built. Stage 1c: everything compiles and links (`build/monolith/xray`, tag `stage1c-linked`);
