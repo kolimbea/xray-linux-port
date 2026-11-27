@@ -15,8 +15,17 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
 - Current work (2026-11-27): roadmap of docs/technical-audit/ROADMAP.md — phase 1 and most of phase 2
   done (status table at its end). Next: packaging, Tracy, AMD/Intel tests, SSFX AO, full-screen
   measurements with the display on (OPEN_QUESTIONS Q18), CI activation (branch ci-workflow).
+- **Top bug (2026-11-27): black world after several level changes** (HUD still drawn). Screenshot tour
+  (Bar → Cordon → Agroprom → Dark Valley → ...): after monolith commit "present pass drops its view"
+  the first three loads render, from about the fourth on the scene is black. Frames in
+  build/shots/run3 (contact sheet build/shots/sheet3.jpg). Suspects: state cached across device or
+  level resets in the backend (occlusion queries culling everything, program cache keyed by reused
+  ids, null resources), or a GAMMA effect. Reproduce: echo 1 > build/fixture-gamma/appdata/shot_tour.txt,
+  run with -dbg -ltx user_shots.ltx and XR_VK_SCREENSHOT_EVERY=200.
 - User-reported bugs to fix next (2026-11-27): the sky "lags" (stutters/flickers), the player health
-  widget in the bottom-left corner renders wrong; then test every graphics setting (presets, SSAO modes,
+  widget in the bottom-left corner renders wrong (the body silhouette is one flat dark red while the
+  limb bars show different values — per-part colour possibly lost: vertex colour channel order or
+  blend state; crop in build/shots/corner.png); then test every graphics setting (presets, SSAO modes,
   sun quality, MSAA, tessellation, SSFX options) and fix shader errors found.
 - Screenshot tour (fixture only): gamedata/scripts/zz_shot_tour.script, active while
   appdata/shot_tour.txt exists; config appdata/user_shots.ltx; run with -dbg (g_god) and
