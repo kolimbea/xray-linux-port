@@ -22,20 +22,20 @@ int main()
 
     // rule 1
     expect("non-literal offset, Texture2D", decl + "x = s_a.Load(int3(p, 0), off);",
-        decl + "x = s_a.Load((int3(p, 0)) + int3((off), 0));");
+        decl + "x = s_a.Load((int3(p, 0)) + int3((int2)(off), 0));");
     expect("non-literal offset, Texture2DArray", decl + "x = s_arr . Load( c , int2(i, j) );",
-        decl + "x = s_arr.Load((c) + int4((int2(i, j)), 0, 0));");
+        decl + "x = s_arr.Load((c) + int4((int2)(int2(i, j)), 0, 0));");
     expect("literal offsets stay", decl + "a = s_a.Load(c, int2(1, -1)); b = s_a.Load(c, 3);",
         decl + "a = s_a.Load(c, int2(1, -1)); b = s_a.Load(c, 3);");
     expect("no offset stays", decl + "a = s_a.Load(c);", decl + "a = s_a.Load(c);");
     expect("other texture types stay", decl + "a = s_vol.Load(c, o);", decl + "a = s_vol.Load(c, o);");
     expect("undeclared receiver stays", "a = t.Load(c, o);", "a = t.Load(c, o);");
     expect("nested parentheses in arguments", decl + "a = s_a.Load(int3(f(x, (y)), 0), g(o[1], 2));",
-        decl + "a = s_a.Load((int3(f(x, (y)), 0)) + int3((g(o[1], 2)), 0));");
+        decl + "a = s_a.Load((int3(f(x, (y)), 0)) + int3((int2)(g(o[1], 2)), 0));");
     expect("macro lines are left alone", decl + "#define L(t) t.Load(c, o)\n s_a.Load(c, o);",
-        decl + "#define L(t) t.Load(c, o)\n s_a.Load((c) + int3((o), 0));");
+        decl + "#define L(t) t.Load(c, o)\n s_a.Load((c) + int3((int2)(o), 0));");
     expect("two uses in one line", decl + "s_a.Load(c, o) + s_a.Load(d, p)",
-        decl + "s_a.Load((c) + int3((o), 0)) + s_a.Load((d) + int3((p), 0))");
+        decl + "s_a.Load((c) + int3((int2)(o), 0)) + s_a.Load((d) + int3((int2)(p), 0))");
     expect("Load as part of a longer name stays", decl + "s_a.LoadX(c, o); s_a.MyLoad(c, o);",
         decl + "s_a.LoadX(c, o); s_a.MyLoad(c, o);");
     expect("unbalanced call stays", decl + "s_a.Load(c, o", decl + "s_a.Load(c, o");
@@ -49,7 +49,7 @@ int main()
 
     // edge cases
     expect("empty", "", "");
-    expect("both rules", decl + "[unroll(n)] x = s_a.Load(c, o);", decl + "[unroll] x = s_a.Load((c) + int3((o), 0));");
+    expect("both rules", decl + "[unroll(n)] x = s_a.Load(c, o);", decl + "[unroll] x = s_a.Load((c) + int3((int2)(o), 0));");
 
     // rule 3: drop an unused parameter whose input semantic duplicates another one
     {
@@ -86,5 +86,20 @@ int main()
     }
 
     printf(failures ? "FAILED (%d)\n" : "all checks passed\n", failures);
+    // rule 4
+    expect("lowercase texture2D declaration", "uniform texture2D jitter4;\nx = jitter4.Load(int3(p, 0));",
+        "uniform Texture2D jitter4;\nx = jitter4.Load(int3(p, 0));");
+    expect("texture3D and textureCUBE", "texture3D v; textureCUBE c; textureCube d;",
+        "Texture3D v; TextureCube c; TextureCube d;");
+    expect("rule 1 applies to a lowercase declaration", "texture2D t;\nx = t.Load(c, o);",
+        "Texture2D t;\nx = t.Load((c) + int3((int2)(o), 0));");
+    expect("longer names and directives stay", "my_texture2D a; texture2Dx b;\n#define texture2D foo\n",
+        "my_texture2D a; texture2Dx b;\n#define texture2D foo\n");
+    expect("scalar offset in parentheses is widened", decl + "x = s_a.Load(int3(p, 0), ( 0 ));",
+        decl + "x = s_a.Load((int3(p, 0)) + int3((int2)(( 0 )), 0));");
+    // rule 5
+    expect("pow2 partitioning", "[domain(\"tri\")]\n[partitioning( \"pow2\" )]\n[outputtopology(\"triangle_cw\")]",
+        "[domain(\"tri\")]\n[partitioning( \"integer\" )]\n[outputtopology(\"triangle_cw\")]");
+    expect("other partitioning stays", "[partitioning(\"fractional_odd\")]", "[partitioning(\"fractional_odd\")]");
     return failures ? 1 : 0;
 }

@@ -57,6 +57,7 @@ for v in "${VARIANTS[@]}"; do
     rm -f "$log" "$OUT/$name.png"
     before=$(ls "$APP"/logs/crash_*.log 2>/dev/null | wc -l)
     start=$(date +%s)
+    cd "$FIX" # fsgame.ltx is looked up in the working directory
     XR_VK_SCREENSHOT="$OUT/$name.png" XR_VK_SCREENSHOT_EVERY=1 XR_VK_SCREENSHOT_FROM=$FRAME XR_VK_SCREENSHOT_COUNT=1 \
     XR_NO_MSGBOX=1 timeout 420 bwrap --die-with-parent --dev-bind / / --ro-bind "$HOME/Games/gamma" "$HOME/Games/gamma" \
         "$ROOT/build/monolith/xray_vk" -nointro -ltx "$ltx" \
@@ -68,11 +69,22 @@ for v in "${VARIANTS[@]}"; do
     done
     wait $pid 2>/dev/null
     rc=$?
+    # the engine may still be shutting down after timeout returns; a second instance would exit at once
+    # (an exiting process has an empty cmdline, so wait on the single-instance lock itself)
+    for _ in $(seq 120); do
+        busy=0
+        for l in "${XDG_RUNTIME_DIR:-/tmp}"/Local_STALKER-COP_*.lock; do
+            [ -e "$l" ] && ! flock -n "$l" true && busy=1
+        done
+        [ $busy = 0 ] && break
+        sleep 1
+    done
+    cp "$log" "$OUT/$name.log" 2>/dev/null
     after=$(ls "$APP"/logs/crash_*.log 2>/dev/null | wc -l)
     {
         echo "== $name ($over): exit $rc, $(( $(date +%s) - start )) s, frame $( [ -f "$OUT/$name.png" ] && echo yes || echo NO ), new crash reports $((after - before))"
         grep -E "^\* vk stats" "$log" | tail -1 | cut -c1-150
-        grep -E "^! vk|SHADER|shader.*(fail|error)" "$log" | sort | uniq -c | sort -rn | head -12
+        grep -iE "^! vk|^! .*shader|shader.*(fail|error)" "$log" | sort | uniq -c | sort -rn | head -12
     } | tee -a "$OUT/report.txt"
     rm -f "$APP/$ltx"
 done

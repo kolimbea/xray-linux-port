@@ -22,6 +22,13 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
 - Memory note: "staging textures" reach 7-13 GB of process memory with GAMMA (the engine keeps every
   loaded-but-never-drawn texture as STAGING until its first Apply, dx10SH_Texture.cpp ProcessStaging);
   same engine design as on Windows, but worth an option to drop or compress them.
+- Graphics settings matrix (2026-11-27, tools/settings_matrix.sh, 20 variants, GAMMA autotest save):
+  all start and render after monolith acb7358. Fixed: HBAO and HDAO shader compile errors, null
+  dereference with r2_ssao_blur (upstream), tessellation now disabled on Vulkan with a log line (hull /
+  domain stages not implemented — open work). Still open: with MSAA the SSFX passes read multisampled
+  targets declared as Texture2D (bound as null: TAA, motion vectors, SSS off under MSAA); "view
+  dimension 8" render target views (Texture2DMS array) unsupported. FPS on GTX 1650 Ti, 1080p high,
+  interior: 24-31.
 - User-reported bugs to fix next (2026-11-27): the sky "lags" (stutters/flickers), the player health
   widget in the bottom-left corner (Body Health System, zzz_player_injuries.script): its grey health
   fill (vertical CUIProgressBar "bhs_health", scissor-clipped) is present on some frames and missing on

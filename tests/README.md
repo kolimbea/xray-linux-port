@@ -22,6 +22,8 @@ and compat_sha0 pass.
 Vulkan backend (CMake targets in build/monolith):
 - `vk_smoke` — M2: DXGI/D3D11 device, swap chain, clear, present, readback (`XR_VK_VALIDATION=1`).
 - `vk_hlsl_rewrite` — unit test of the HLSL compat rules (`xrRenderVK/vkHlslRewrite.cpp`).
+- `tools/settings_matrix.sh [variant...]` — every graphics option once on the GAMMA fixture: frame,
+  "! vk" lines and crash reports in build/matrix/report.txt (2026-11-27: 20/20 pass; vk_shaders 454/470).
 - `vk_draw` — M4: draw path through the D3D11 interface with pixel checks (`XR_VK_VALIDATION=1`).
 - `vk_shaders <shader-root> [out-dir]` — M3: every r3 shader through D3DCompile/D3DReflect, spirv-val,
   shader objects/programs on the GPU (`XR_VK_VALIDATION=1`, `XR_VK_GPU=<n>` to pick a GPU).
