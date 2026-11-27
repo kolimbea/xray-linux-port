@@ -12,6 +12,8 @@ Last results (2026-11-23): all compat tests pass; smoke test mounts 68 archives 
   `clang++ -std=c++20 -Imonolith/src/Common/linux tests/compat_dds.cpp monolith/src/Common/linux/dds_codec.cpp`
 - `compat_d3dx9.cpp` — D3DX9 math/declarations (`d3dx9_linux.cpp`); build with the engine include
   paths (see the d3dx9_linux.cpp entry in build/monolith/compile_commands.json).
+- `compat_overlay_write.cpp` — writing through an overlay symlink (fopen "w"/"a") leaves the mod file
+  unchanged and creates the overlay's own copy; pass an empty temporary directory.
 - `compat_sha0.cpp` — SHA-0 known answers: `clang++ -I"monolith/src/3rd party/crypto" tests/compat_sha0.cpp`
 
 Results 2026-11-24: compat_dds (15618/15626 GAMMA DDS parse; the 8 others are PNG files), compat_d3dx9

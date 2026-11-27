@@ -49,3 +49,22 @@ if [ ! -f "$d/ffx-fsr/ffx_fsr1.h" ]; then
   tar xzf "$d/src.tar.gz" -C "$d" --strip-components=1
 fi
 echo "fsr1 a21ffb8: $d"
+
+# Dear ImGui 1.91.8 SDL3 + SDL_Renderer backends (MIT), the version compiled into the engine: the
+# launcher (tools/launcher) draws its window with them. sha256 recorded when first fetched (2026-11-27).
+d="$root/build/deps/imgui-sdl3-1.91.8"
+mkdir -p "$d"
+while read -r sum f; do
+  if [ ! -f "$d/$f" ]; then
+    curl -sSfL -o "$d/$f" "https://raw.githubusercontent.com/ocornut/imgui/v1.91.8/backends/$f"
+  fi
+  echo "$sum  $d/$f" | sha256sum -c --quiet -
+done <<'SUMS'
+72ef28868e34ee88a65c9af368e4d3e643b8b1847407e5961011758aa411ad7c imgui_impl_sdl3.cpp
+a6866cb9f9d9eb69ad64d49075fbcc247cadb9c872fcdfb0569f4b93ccb802a6 imgui_impl_sdl3.h
+1cb0265c5878bc0337709aa59b62d2e217af9e29a3b4abe84a34fb72d5dd4fd3 imgui_impl_sdlrenderer3.cpp
+3e356dd91a17f4210e2aab5d4e28aa55adb0c95c26dc87c5dd5a806d46bad52f imgui_impl_sdlrenderer3.h
+SUMS
+[ -f "$d/LICENSE.txt" ] || curl -sSfL -o "$d/LICENSE.txt" https://raw.githubusercontent.com/ocornut/imgui/v1.91.8/LICENSE.txt
+echo "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf  $d/LICENSE.txt" | sha256sum -c --quiet -
+echo "imgui sdl3 backends 1.91.8: $d"
