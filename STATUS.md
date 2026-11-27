@@ -22,6 +22,19 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
 - Memory note: "staging textures" reach 7-13 GB of process memory with GAMMA (the engine keeps every
   loaded-but-never-drawn texture as STAGING until its first Apply, dx10SH_Texture.cpp ProcessStaging);
   same engine design as on Windows, but worth an option to drop or compress them.
+- Performance pass (2026-11-27, monolith f6f80123): profiling with perf (attach from outside bwrap;
+  call chains need `-e cycles:u --user-callchains`) showed the frame is main-thread bound (GPU ~11 ms of
+  ~35): backend + NVIDIA driver ~19 % of the main thread, the rest engine (Lua AI ~30 %, sun cascades
+  ~17 %). Host heap moved from the PCIe BAR to system memory: 28.5-32.5 -> 27.1-27.8 ms/frame (laptop
+  thermals make single runs noisy: interleave A/B runs, wait for Tctl < 60 C). Incremental push
+  descriptors and a per-context program cache: ~1 %. Next candidates: a command-stream worker thread
+  (DXVK-style) to take the ~19 % off the main thread, PGO, MSAA+SSFX, tessellation stages.
+- Input (monolith 4dba8b49): SDL text input only while imgui edits text (tester report: A/S/D do not
+  move; suspected input-method capture). Not reproduced here (no IME on this machine): needs the
+  tester's confirmation. Open: one SIGSEGV in a Lua call of CUIWindow::(bool) from a CPHScriptCondition
+  (crash_1795808520.log), not reproduced in two reruns.
+- Launcher (root 3d78469): language switch in Settings (auto/English/Russian); auto = Russian only for
+  ru/uk/be/kk locales.
 - Packaging (2026-11-27): tools/packaging/ builds in a Debian 13 container (glibc 2.41) and makes
   tar.gz, AppImage, .deb, Flatpak bundle and the AUR PKGBUILD (tools/package.sh <tag> [--publish]).
   Verified: game renders from the package and from the Flatpak; .deb installs on Ubuntu 25.04, AUR
