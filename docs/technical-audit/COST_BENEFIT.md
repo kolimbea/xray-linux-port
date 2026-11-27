@@ -7,7 +7,7 @@
 | Build from upstream `.vcxproj` (`vcxproj_sources.py`) | **KEEP** | upstream file changes flow in automatically; Windows build untouched |
 | Build configuration | **IMPROVE** | add Release preset with ThinLTO; CTest |
 | Linux compat layer (`Common/linux`) | **KEEP** | thin, no silent stubs |
-| Input (SDL3) | **IMPROVE** | add gamepad |
+| Input (SDL3) | **KEEP** | gamepad is a new feature (none upstream), optional |
 | Sound (OpenAL Soft) | **KEEP** | initialises; verify audibly |
 | Lua runtime | **IMPROVE** | `require`/`package.path` searcher |
 | R4 renderer source | **KEEP** | unchanged upstream code = all GAMMA shader mods work |
@@ -46,7 +46,7 @@ which a renderer rewrite would not remove.
 | CI + CTest | indirect, high | 2 d | low | ★★★★ |
 | FSR 1 | high at 1440p/4K, iGPU, Deck | 2-3 d | low (frozen MIT code) | ★★★★ |
 | Level-entry hitches | high | 3-5 d | medium | ★★★★ |
-| Gamepad | medium (Deck: high) | 1-2 d | low | ★★★ |
+| Gamepad (new feature; none upstream) | medium (Deck: covered by Steam Input) | 2-4 d | low | ★★ |
 | ThinLTO | small-medium **[E]** | 1 d | low | ★★★ |
 | Packaging | high for reach | 1-2 w | medium | ★★★ |
 | Temporal inputs + FSR 2 | high image quality | 2-3 months | medium-high | ★★ |

@@ -20,7 +20,7 @@ with a test and a measurement where it can be measured (BENCHMARK_PLAN.md).
 |---|---|---|---|---|
 | 2.1 | Swapchain at window size in fullscreen + **FSR 1** (EASU+RCAS) for render < window; console vars | 2-3 d | 1440p window rendered at 1080p looks sharper than bilinear | GPU ms at 1440p native vs 1080p+FSR |
 | 2.2 | Level-entry hitches: prewarm shaders of the level, convert staging textures progressively instead of on first draw | 3-5 d | p99 of the first 600 in-level frames < 100 ms | first-window p99 |
-| 2.3 | Gamepad via SDL3 → XInput state | 1-2 d | menu + gameplay with a controller | manual + input unit test |
+| 2.3 | (optional) native gamepad via SDL3 — new feature, upstream has none | 2-4 d | menu + gameplay with a controller | manual + input unit test |
 | 2.4 | ThinLTO release preset (+ `-march=x86-64-v2` option) | 1 d | builds, tests pass | ms/frame CPU-bound scene |
 | 2.5 | Tracy integration (optional build flag) + engine zones on scheduler/AI/render | 2 d | captures show per-subsystem time | — |
 | 2.6 | Benchmark harness in repo (tools/bench.sh, fixed save, user_bench.ltx) | 0.5 d | repeatable medians | itself |
@@ -55,3 +55,16 @@ with a test and a measurement where it can be measured (BENCHMARK_PLAN.md).
 ## Phase 7 — not worth doing (see COST_BENEFIT.md)
 Native renderer rewrite; XeSS (no Linux SDK); FSR 4; NIS; mesh shaders / ray tracing / async compute;
 descriptor buffers; multiplayer; ReShade port.
+
+## Implementation status (updated 2026-11-27)
+| Item | State | Commit / evidence |
+|---|---|---|
+| 1.1 crash reports | **done**: `logs/crash_<unix time>.log` with an async-signal-safe native stack, then the engine log; `alarm(10)` ends a hung handler | monolith 646e745; SIGTERM test wrote a report with the stack |
+| 1.3 Lua `require` | **done**: searcher for Windows-style package.path modules; Useful Idiots loads | monolith 5793f62; remaining 5 script failures are GAMMA's own (patches of mods that are disabled in the profile, a C-style comment in a .script) |
+| 1.4 clean shutdown | **cause found**, not fixed yet: quitting a level corrupts the heap (`free()` abort in `CSpaceRestrictionComposition::~` from `CLevel::remove_objects`); the handler used to deadlock on it — now the process ends within ~11 s | crash report stack |
+| 1.5 gamma/brightness | **done**: curve applied by a present-time compute pass; brightness 1.5 raised mean luminance 35.8 → 70.0 | monolith bb75516 |
+| 1.6 CI | **written**, not active: the gh token lacks the `workflow` scope; commits on branch `ci-workflow` | root 3a579a1, 42a996a |
+| — | **done**: `-dbg` crash (va_list reused by vsprintf) | monolith 6446e2f |
+| 2.1 FSR 1 | **done**: swapchain at window size, EASU+RCAS at Present; `vk_smoke` checks the path (0 validation errors) | monolith 8cee8df |
+| 2.6 benchmark harness | **done**: `tools/run_level.sh` | root b6e2387 |
+| legacy dxvk path | **optional, off by default** (`XR_BUILD_DXVK_RENDERER`) | monolith cac9e02 |

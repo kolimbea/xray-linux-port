@@ -13,7 +13,7 @@ sessions. Evidence: backend tests pass with 0 validation errors; 454/470 GAMMA s
 to SPIR-V with 0 validation errors; no D3D11/DXGI method the renderer calls is unimplemented
 (`vk_pending.gen.cpp` empty). It is **not release quality**: two unexplained aborts in the user's
 sessions on 2026-11-26, a shutdown hang, one GAMMA mod (Useful Idiots) off because of Lua `require`
-paths, no gamepad, gamma/brightness most likely ineffective, no packaging, no CI, tested on one
+paths, gamma/brightness most likely ineffective, no packaging, no CI, tested on one
 NVIDIA GPU only.
 
 ## What is done well?
@@ -57,7 +57,7 @@ buffers (no content or measured need); ReShade port; multiplayer.
 
 ## Keep / modernise / rewrite / replace
 KEEP: engine game code, R4 renderer source, backend core, shader toolchain, compat layer, build from
-`.vcxproj`. IMPROVE: backend sync and error handling, input (gamepad), Lua loader, build config.
+`.vcxproj`. IMPROVE: backend sync and error handling, Lua loader, build config; gamepad is an optional new feature (none upstream).
 REFACTOR: present path into its own module. ADD: diagnostics, CI/CTest, FSR 1, packaging, later
 temporal upscaling and HDR. OPTIONAL/remove: legacy dxvk `xray` target, DLSS, Discord. REWRITE: none.
 REPLACE: DXGI gamma ramp → shader LUT; compositor scaling → FSR.
@@ -70,7 +70,7 @@ code itself, console variables for player-facing options, and CI + packaging aro
 
 ## What is realistically achievable?
 - **2-4 weeks**: stable alpha for NVIDIA/AMD/Intel-Gen9+ Linux players — crash reports, fixes above,
-  FSR 1, gamepad, CI; FPS at least as today (23.5 ms at 720p on this laptop; ~1.5x lower GPU cost at
+  FSR 1, CI; FPS at least as today (23.5 ms at 720p on this laptop; ~1.5x lower GPU cost at
   1440p with FSR 1 **[E]**).
 - **2-3 months**: packaged beta with smoother level entry, pacing, measurable CPU gains from profiling.
 - **4-6 months**: temporal upscaling (FSR 2, DLSS plug-in) and HDR — if the motion-vector work holds up

@@ -37,7 +37,7 @@ is marked **[A]**. Target audience: every Linux player of Anomaly/GAMMA, not one
 | Item | Finding | Verdict |
 |---|---|---|
 | Lua `require` / `package.path` | Windows-style paths fail on Linux (Useful Idiots mod) | **ADD** a Linux searcher that maps `a.b.c` / `\\` paths through the engine's case-insensitive FS |
-| Gamepad | XInput via `GetProcAddress` only | **ADD** SDL3 gamepad → the engine's XInput state structure |
+| Gamepad | none upstream either (XInput code commented out in `xr_input_xinput.cpp`, `Xr_input.cpp`) | **OPTIONAL** new feature (SDL3 gamepad → engine actions); Steam Input mappings work today |
 | Gamma / brightness | DXGI gamma ramp unsupported | **ADD** a shader-based gamma/brightness/contrast at Present (portable; also fixes windowed mode) |
 | Multithreading | main thread does AI+Lua+render | **IMPROVE** step by step: profile with Tracy; candidates: parallel culling/visibility, render-thread split, A-Life parts — each needs determinism checks (PLAN.md performance track) |
 | LTO / PGO / `-march` | not used; Windows build uses whole-program optimisation (branch name `…-wpo`) | **ADD** ThinLTO (low risk); PGO later **[E: gain]** |

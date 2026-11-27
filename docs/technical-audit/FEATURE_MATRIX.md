@@ -11,7 +11,7 @@ Decision codes as in COST_BENEFIT.md. Evidence in CURRENT_STATE.md.
 | World | A-Life, AI, physics, levels | ✅ | ✅ Bar verified; other levels 🟡 | test matrix |
 | Scripts | GAMMA Lua scripts | ✅ | ✅ except `require`-based mods ❌ (Useful Idiots) | **fix** (phase 1) |
 | Input | keyboard / mouse | ✅ | ✅ | KEEP |
-| Input | gamepad (XInput) | ✅ | ❌ | ADD (phase 2) |
+| Input | gamepad | ❌ (XInput code commented out upstream) | ❌ (parity) | OPTIONAL new feature; Steam Input works meanwhile |
 | Audio | OpenAL Soft playback | ✅ | 🟡 initialises; audibility not verified | verify |
 | Audio | EFX reverb | ✅ | 🟡 off in user config; untested on | verify |
 | Render | R4 deferred pipeline, shadows, lights, HUD | ✅ | ✅ | KEEP |
