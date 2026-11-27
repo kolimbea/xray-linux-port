@@ -116,6 +116,34 @@ int main()
         SDL_PumpEvents();
     }
 
+    // gamma control (the engine's brightness/contrast/gamma): the output offers control points and
+    // accepts a curve; a non-identity curve turns on the present pass, an identity one turns it off
+    {
+        IDXGIOutput *out = nullptr;
+        CHECK(SUCCEEDED(sc->GetContainingOutput(&out)));
+        if (out)
+        {
+            DXGI_GAMMA_CONTROL_CAPABILITIES caps{};
+            CHECK(SUCCEEDED(out->GetGammaControlCapabilities(&caps)));
+            CHECK(caps.NumGammaControlPoints >= 2 && caps.MaxConvertedValue == 1.f && caps.ControlPointPositions[0] == 0.f);
+            static DXGI_GAMMA_CONTROL g{};
+            for (UINT i = 0; i < caps.NumGammaControlPoints; ++i)
+                g.GammaCurve[i] = {1.f - caps.ControlPointPositions[i], caps.ControlPointPositions[i], 0.5f};
+            CHECK(SUCCEEDED(out->SetGammaControl(&g)));
+            for (int frame = 0; frame < 3; ++frame)
+            {
+                ctx->OMSetRenderTargets(1, &rtv, dsv);
+                ctx->ClearRenderTargetView(rtv, colour);
+                CHECK(SUCCEEDED(sc->Present(1, 0)));
+            }
+            for (UINT i = 0; i < caps.NumGammaControlPoints; ++i)
+                g.GammaCurve[i] = {caps.ControlPointPositions[i], caps.ControlPointPositions[i], caps.ControlPointPositions[i]};
+            CHECK(SUCCEEDED(out->SetGammaControl(&g)));
+            CHECK(SUCCEEDED(sc->Present(1, 0)));
+            out->Release();
+        }
+    }
+
     // VK_SMOKE_HOLD=<seconds>: keep presenting so the window can be looked at
     if (const char *hold = getenv("VK_SMOKE_HOLD"))
     {
