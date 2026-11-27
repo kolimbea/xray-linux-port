@@ -116,28 +116,95 @@ namespace launcher
           << "\noverlay=" << c.overlay_stamp << "\nlang=" << c.lang << "\n";
     }
 
+    namespace
+    {
+        // A Windows path from MO2's ModOrganizer.ini ("@ByteArray(Z:\\home\\me\\anomaly)") as a Linux
+        // path: Z: is the root under Wine; other drive letters through the dosdevices links of the
+        // Wine prefix the MO2 instance lives in. Empty if it cannot be mapped.
+        fs::path wine_path(std::string v, const fs::path &mo2)
+        {
+            const std::string pre = "@ByteArray(";
+            if (v.compare(0, pre.size(), pre) == 0 && !v.empty() && v.back() == ')')
+                v = v.substr(pre.size(), v.size() - pre.size() - 1);
+            std::string out;
+            for (size_t i = 0; i < v.size(); ++i)
+            {
+                if (v[i] == '\\')
+                {
+                    if (i + 1 < v.size() && v[i + 1] == '\\')
+                        ++i;
+                    out += '/';
+                }
+                else
+                    out += v[i];
+            }
+            if (out.size() < 2 || out[1] != ':')
+                return out.empty() || out[0] != '/' ? fs::path() : fs::path(out);
+            const char drive = char(tolower(out[0]));
+            const std::string rest = out.substr(2);
+            if (drive == 'z')
+                return fs::path(rest.empty() ? "/" : rest);
+            std::error_code ec;
+            for (fs::path p = mo2; !p.empty() && p != p.parent_path(); p = p.parent_path())
+                if (fs::is_directory(p / "dosdevices", ec))
+                {
+                    const fs::path dev = p / "dosdevices" / (std::string(1, drive) + ":");
+                    if (fs::exists(dev, ec))
+                        return fs::canonical(dev, ec) / fs::path(rest).relative_path();
+                    break;
+                }
+            return {};
+        }
+
+        // gamePath of the MO2 instance (the Anomaly it was set up for), mapped to Linux
+        fs::path mo2_game_path(const fs::path &mo2)
+        {
+            std::ifstream f(mo2 / "ModOrganizer.ini");
+            std::string line;
+            while (std::getline(f, line))
+            {
+                if (!line.empty() && line.back() == '\r')
+                    line.pop_back();
+                if (line.compare(0, 9, "gamePath=") == 0)
+                    return wine_path(line.substr(9), mo2);
+            }
+            return {};
+        }
+    } // namespace
+
     bool detect_gamma(const fs::path &root, Config &c, std::string &error)
     {
         std::error_code ec;
-        auto is_anomaly = [&](const fs::path &p) { return fs::exists(p / "fsgame.ltx", ec) && fs::is_directory(p / "db", ec); };
-        auto is_mo2 = [&](const fs::path &p) { return fs::is_directory(p / "mods", ec) && fs::is_directory(p / "profiles", ec); };
-        fs::path anomaly, mo2;
-        for (const fs::path &p : {root / "anomaly", root / "Anomaly", root})
-            if (is_anomaly(p))
-            {
-                anomaly = p;
-                break;
-            }
-        for (const fs::path &p : {root / "gamma", root / "GAMMA", root})
-            if (is_mo2(p))
-            {
-                mo2 = p;
-                break;
-            }
+        auto is_anomaly = [&](const fs::path &p) { return !p.empty() && fs::exists(p / "fsgame.ltx", ec) && fs::is_directory(p / "db", ec); };
+        auto is_mo2 = [&](const fs::path &p) { return !p.empty() && fs::is_directory(p / "mods", ec) && fs::is_directory(p / "profiles", ec); };
+        auto first = [](const std::vector<fs::path> &list, auto &&pred) {
+            for (const fs::path &p : list)
+                if (pred(p))
+                    return p;
+            return fs::path();
+        };
+        const fs::path up = root.parent_path();
+        // the chosen folder: a root holding both (stalker-gamma-cli: anomaly/ + gamma/), or one of them
+        fs::path anomaly = first({root / "anomaly", root / "Anomaly", root}, is_anomaly);
+        fs::path mo2 = first({root / "gamma", root / "GAMMA", root}, is_mo2);
+        // the other one: where MO2 says its game is, next to the chosen folder, or chosen earlier
+        if (!mo2.empty() && anomaly.empty())
+            anomaly = first({mo2_game_path(mo2), up / "anomaly", up / "Anomaly", fs::path(c.anomaly_dir)}, is_anomaly);
+        if (!anomaly.empty() && mo2.empty())
+            mo2 = first({up / "gamma", up / "GAMMA", up / "G.A.M.M.A", fs::path(c.mo2_dir)}, is_mo2);
+        // remembered even when the pair is incomplete, so the two folders can be chosen one after the other
+        if (!anomaly.empty())
+            c.anomaly_dir = anomaly.string();
+        if (!mo2.empty())
+            c.mo2_dir = mo2.string();
+        if (anomaly.empty() && mo2.empty())
+            return error = "Neither Anomaly (a folder with fsgame.ltx and db/) nor GAMMA's Mod Organizer 2 folder "
+                           "(with mods/ and profiles/) is in " + root.string(),
+                   false;
         if (anomaly.empty())
-            return error = "Anomaly not found (a folder with fsgame.ltx and db/)", false;
+            return error = "GAMMA found in " + mo2.string() + ". Now choose the Anomaly folder (with fsgame.ltx and db/).", false;
         if (mo2.empty())
-            return error = "Mod Organizer 2 instance not found (a folder with mods/ and profiles/)", false;
+            return error = "Anomaly found in " + anomaly.string() + ". Now choose the GAMMA folder (with mods/ and profiles/).", false;
         std::string profile = c.profile;
         if (!fs::exists(mo2 / "profiles" / profile / "modlist.txt", ec))
         {
@@ -149,10 +216,8 @@ namespace launcher
                     break;
                 }
             if (profile.empty())
-                return error = "no MO2 profile with a modlist.txt", false;
+                return error = "no MO2 profile with a modlist.txt in " + (mo2 / "profiles").string(), false;
         }
-        c.anomaly_dir = anomaly.string();
-        c.mo2_dir = mo2.string();
         c.profile = profile;
         return true;
     }

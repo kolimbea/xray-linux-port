@@ -64,8 +64,10 @@ namespace launcher
     Config load_config();
     void save_config(const Config &c);
 
-    // Finds Anomaly and the MO2 instance under a GAMMA folder (stalker-gamma-cli layout: anomaly/ +
-    // gamma/, or the folders themselves). Returns false with a reason.
+    // Finds Anomaly and the MO2 instance from a chosen folder: a root with anomaly/ + gamma/
+    // (stalker-gamma-cli), or either folder itself; the other one is taken from MO2's gamePath, the
+    // neighbouring folders or the configuration. Fills what it found into `c` even when it returns
+    // false (with a reason), so the two folders can be chosen one after the other.
     bool detect_gamma(const fs::path &root, Config &c, std::string &error);
     bool overlay_needed(const Config &c);
 

@@ -61,8 +61,10 @@ namespace
             {"newer", {"Update available: ", "Доступно обновление: "}},
             {"gamma", {"GAMMA folder", "Папка GAMMA"}},
             {"choose", {"Choose...", "Выбрать..."}},
-            {"need_gamma", {"Choose your GAMMA folder (with anomaly/ and gamma/) to start.",
-                            "Выберите папку GAMMA (с anomaly/ и gamma/), чтобы начать."}},
+            {"need_gamma", {"Settings: choose the GAMMA folder (Mod Organizer 2 with mods/ and profiles/), or the folder that holds "
+                            "both anomaly/ and gamma/. A separate Anomaly folder is found automatically or can be chosen next.",
+                            "Настройки: выберите папку GAMMA (Mod Organizer 2 с mods/ и profiles/) или папку, где лежат anomaly/ и "
+                            "gamma/. Отдельная папка Anomaly найдётся сама или её можно выбрать следующей."}},
             {"overlay", {"Rebuild mod overlay", "Пересобрать моды"}},
             {"overlay_need", {"The mod list changed: the overlay is rebuilt before the game starts.",
                               "Список модов изменился: перед запуском моды будут пересобраны."}},
@@ -309,12 +311,16 @@ namespace
             if (!a.busy() && ImGui::SmallButton(tr("install")))
                 a.install(a.releases.front());
         }
-        if (a.cfg.mo2_dir.empty())
-            ImGui::TextColored(ImVec4(0.9f, 0.65f, 0.25f, 1.f), "%s", tr("need_gamma"));
+        if (a.cfg.mo2_dir.empty() || a.cfg.anomaly_dir.empty())
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.65f, 0.25f, 1.f));
+            ImGui::TextWrapped("%s", tr("need_gamma"));
+            ImGui::PopStyleColor();
+        }
         else if (overlay_needed(a.cfg))
             ImGui::TextDisabled("%s", tr("overlay_need"));
         ImGui::Spacing();
-        const bool can_play = !a.busy() && !a.cfg.version.empty() && !a.cfg.mo2_dir.empty();
+        const bool can_play = !a.busy() && !a.cfg.version.empty() && !a.cfg.mo2_dir.empty() && !a.cfg.anomaly_dir.empty();
         ImGui::BeginDisabled(!can_play);
         if (big_button(a.game_running ? tr("playing") : tr("play"), ImVec2(260, 64), true))
             a.play();
@@ -369,11 +375,15 @@ namespace
         if (ImGui::Button(tr("choose")))
             SDL_ShowOpenFolderDialog(on_folder, &a, window, nullptr, false);
         ImGui::SameLine();
-        if (ImGui::Button(tr("overlay")) && !a.cfg.mo2_dir.empty())
+        if (ImGui::Button(tr("overlay")) && !a.cfg.mo2_dir.empty() && !a.cfg.anomaly_dir.empty())
             a.overlay(false);
         ImGui::EndDisabled();
         if (!a.gamma_error.empty())
-            ImGui::TextColored(ImVec4(0.95f, 0.45f, 0.35f, 1.f), "%s", a.gamma_error.c_str());
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.45f, 0.35f, 1.f));
+            ImGui::TextWrapped("%s", a.gamma_error.c_str());
+            ImGui::PopStyleColor();
+        }
         progress_line(a);
         ImGui::Separator();
         if (ImGui::Button(tr("saves")))
@@ -413,10 +423,11 @@ static int command_line(int argc, char **argv)
         if (a == "--gamma" && i + 1 < argc)
         {
             std::string error;
-            if (!detect_gamma(argv[++i], cfg, error))
-                return fprintf(stderr, "%s\n", error.c_str()), 1;
+            const bool ok = detect_gamma(argv[++i], cfg, error);
             cfg.overlay_stamp.clear();
-            save_config(cfg);
+            save_config(cfg); // a half found is kept, as in the window
+            if (!ok)
+                return fprintf(stderr, "%s\n", error.c_str()), 1;
             printf("anomaly: %s\nmo2: %s\nprofile: %s\n", cfg.anomaly_dir.c_str(), cfg.mo2_dir.c_str(), cfg.profile.c_str());
         }
         else if (a == "--overlay")
@@ -521,9 +532,12 @@ int main(int argc, char **argv)
             if (!app.picked_folder.empty())
             {
                 Config c = app.cfg;
-                if (detect_gamma(app.picked_folder, c, app.gamma_error))
-                {
+                const bool ok = detect_gamma(app.picked_folder, c, app.gamma_error);
+                if (ok)
                     app.gamma_error.clear();
+                // a half found (Anomaly or GAMMA) is kept so the other folder can be chosen next
+                if (c.anomaly_dir != app.cfg.anomaly_dir || c.mo2_dir != app.cfg.mo2_dir || ok)
+                {
                     c.overlay_stamp.clear();
                     app.cfg = c;
                     save_config(app.cfg);
