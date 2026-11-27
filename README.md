@@ -24,19 +24,19 @@ tried. Other GPUs and drivers have not been tested in the game.
 | | |
 |---|---|
 | this repository | docs, plan and progress log, tests, tools |
-| [kolimbea/xray-monolith](https://github.com/kolimbea/xray-monolith/tree/stage-2-vk), branch `stage-2-vk` | the engine with the Linux port and the Vulkan renderer |
+| [kolimbea/xray-monolith-linux](https://github.com/kolimbea/xray-monolith-linux/tree/stage-2-vk), branch `stage-2-vk` | the engine with the Linux port and the Vulkan renderer |
 
 ## Building (Linux)
 
 Requirements: clang, CMake, Ninja, Vulkan headers/loader, SDL3, oneTBB, OpenAL, libvorbis/libogg,
-libtheora, libjpeg, ICU, OpenSSL, vkd3d-shader (development packages). The GPU needs Vulkan 1.3 with
+libtheora, libjpeg, ICU, OpenSSL (development packages). The GPU needs Vulkan 1.3 with
 `VK_EXT_shader_object`, `VK_EXT_extended_dynamic_state3`, `VK_EXT_vertex_input_dynamic_state` and
 `VK_KHR_push_descriptor`.
 
 ```sh
 git clone https://github.com/kolimbea/xray-linux-port
 cd xray-linux-port
-git clone -b stage-2-vk https://github.com/kolimbea/xray-monolith monolith
+git clone -b stage-2-vk https://github.com/kolimbea/xray-monolith-linux monolith
 tools/fetch_deps.sh            # pinned, checksummed third-party pieces (DXC, ...) into build/deps
 cmake -S monolith -B build/monolith -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 ninja -C build/monolith xray_vk vk_smoke vk_draw vk_heap
