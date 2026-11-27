@@ -36,3 +36,16 @@ if [ ! -f "$d/spirv_reflect.c" ]; then
   tar xzf "$d/src.tar.gz" -C "$d" --strip-components=1
 fi
 echo "spirv-reflect 1.4.363.0: $d"
+
+# AMD FidelityFX Super Resolution 1.0 (commit a21ffb8f6c13233ba336352bdff293894c706575, MIT): EASU/RCAS
+# upscaling of the presented frame (xrRenderVK/vkPresent.cpp). Two headers, compiled in. sha256 of the
+# GitHub commit tarball, recorded when first fetched (2026-11-27).
+d="$root/build/deps/fsr1-a21ffb8"
+if [ ! -f "$d/ffx-fsr/ffx_fsr1.h" ]; then
+  mkdir -p "$d"
+  curl -sSfL -o "$d/src.tar.gz" \
+    https://github.com/GPUOpen-Effects/FidelityFX-FSR/archive/a21ffb8f6c13233ba336352bdff293894c706575.tar.gz
+  echo "b529a31d21971ee9f2a3231bbe17e31d183ccbb7fb6e3f7b0508b2624f61c2d9  $d/src.tar.gz" | sha256sum -c -
+  tar xzf "$d/src.tar.gz" -C "$d" --strip-components=1
+fi
+echo "fsr1 a21ffb8: $d"

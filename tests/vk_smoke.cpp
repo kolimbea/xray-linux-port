@@ -186,6 +186,19 @@ int main()
     ctx->ClearRenderTargetView(rtv, colour);
     CHECK(SUCCEEDED(sc->Present(0, 0))); // sync interval 0: mailbox/immediate swapchain
 
+    // a back buffer smaller than the window (a lower vid_mode in full screen): the present pass scales
+    // it to the window with FSR 1 (EASU + RCAS); XR_VK_SCREENSHOT shows the scaled result
+    rtv->Release();
+    back->Release();
+    CHECK(SUCCEEDED(sc->ResizeBuffers(2, 160, 120, DXGI_FORMAT_UNKNOWN, 0)));
+    CHECK(SUCCEEDED(sc->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back))));
+    CHECK(SUCCEEDED(dev->CreateRenderTargetView(back, nullptr, &rtv)));
+    for (int frame = 0; frame < 3; ++frame)
+    {
+        ctx->ClearRenderTargetView(rtv, colour);
+        CHECK(SUCCEEDED(sc->Present(1, 0)));
+    }
+
     staging->Release();
     dsv->Release();
     depth->Release();
