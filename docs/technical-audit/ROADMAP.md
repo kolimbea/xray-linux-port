@@ -70,4 +70,6 @@ descriptor buffers; multiplayer; ReShade port.
 | 2.1 FSR 1 | **done**: swapchain at window size, EASU+RCAS at Present; `vk_smoke` checks the path (0 validation errors) | monolith 8cee8df |
 | 2.6 benchmark harness | **done**: `tools/run_level.sh` | root b6e2387 |
 | 2.4 ThinLTO | **done**: option `XR_THINLTO`; A/B twice at 720p: 30.05/29.05 → 28.72/27.52 ms/frame (~4.5 %) | monolith 92ee3b4 |
+| 2.2 level-entry hitches | **investigated**: engine-side (AI/Lua warm-up of all NPCs), not caused by the port; a fix would change game logic scheduling (upstream territory) | OPEN_QUESTIONS Q10 |
+| — | **done**: Lua `io.open`/`lfs` and imgui wrote engine paths with backslashes as literal file names (mod save data `.scoc`, MCM, settings caches); now resolved; the user's stray `.scoc` files moved into appdata/savedgames | monolith e830613 |
 | legacy dxvk path | **optional, off by default** (`XR_BUILD_DXVK_RENDERER`) | monolith cac9e02 |

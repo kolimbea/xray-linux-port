@@ -11,7 +11,7 @@
 | Q7 | Behaviour on AMD RADV (iGPU here, Steam Deck) and Intel ANV in-game | run B1 on each |
 | Q8 | Minimum Mesa / NVIDIA versions with every required extension | driver release notes; test on an older distro (container won't do: needs GPU) |
 | Q9 | Cost of the ALL→ALL barriers at 1440p | GPU capture (Nsight/RenderDoc) — **neither is installed on this machine** (checked 2026-11-27); alternative: per-scope timestamp queries in the backend |
-| Q10 | Cause of the level-entry hitches (texture conversion vs shader compiles vs Lua) | Tracy / pmp sampling during level entry |
+| Q10 | Cause of the level-entry hitches (texture conversion vs shader compiles vs Lua) | **answered 2026-11-27**: pmp sampling (400 samples from "Spawning artefacts" on) shows game logic — CSheduler 162/400, CAI_Stalker::shedule_Update 106, Lua pcall 121, visibility ray queries; no shader compiles, no ProcessStaging uploads. The hitches are the engine waking every NPC at once, not the renderer port |
 | Q11 | Gain of ThinLTO/PGO on the CPU-bound scene | A/B (BENCHMARK_PLAN) |
 | Q12 | Does the FidelityFX SDK (FSR 3.1) build on Linux? | try the SDK's CMake on Linux |
 | Q13 | Which packaging works across target distros (AppImage, Flatpak, Steam Linux Runtime)? | distro matrix |
