@@ -102,6 +102,8 @@ namespace launcher
                 c.version = v;
             else if (k == "overlay")
                 c.overlay_stamp = v;
+            else if (k == "lang")
+                c.lang = v;
         }
         return c;
     }
@@ -111,7 +113,7 @@ namespace launcher
         fs::create_directories(data_dir());
         std::ofstream f(data_dir() / "launcher.ini");
         f << "anomaly=" << c.anomaly_dir << "\nmo2=" << c.mo2_dir << "\nprofile=" << c.profile << "\nversion=" << c.version
-          << "\noverlay=" << c.overlay_stamp << "\n";
+          << "\noverlay=" << c.overlay_stamp << "\nlang=" << c.lang << "\n";
     }
 
     bool detect_gamma(const fs::path &root, Config &c, std::string &error)

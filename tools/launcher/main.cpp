@@ -23,8 +23,26 @@ using namespace launcher;
 
 namespace
 {
-    // ---- text: Russian when a Cyrillic font is available, English otherwise ----
+    // ---- text: English or Russian (Settings; "auto" follows LANG), Russian only with a Cyrillic font ----
     bool g_ru = false;
+    bool g_cyrillic = false; // a font with Cyrillic was found
+    void apply_lang(const std::string &lang)
+    {
+        bool ru = lang == "ru";
+        if (lang != "en" && lang != "ru")
+        {
+            // auto: Russian for the languages whose speakers usually read it, English for all others
+            const char *l = getenv("LC_ALL");
+            if (!l || !*l)
+                l = getenv("LC_MESSAGES");
+            if (!l || !*l)
+                l = getenv("LANG");
+            ru = false;
+            for (const char *p : {"ru", "uk", "be", "kk"})
+                ru = ru || (l && !strncmp(l, p, 2));
+        }
+        g_ru = ru && g_cyrillic;
+    }
     const char *tr(const char *key)
     {
         static const std::map<std::string, std::pair<const char *, const char *>> t = {
@@ -59,6 +77,8 @@ namespace
                        "Альфа: возможны ошибки. Установка GAMMA не изменяется."}},
             {"no_releases", {"No releases found yet.", "Релизов пока нет."}},
             {"profile", {"MO2 profile", "Профиль MO2"}},
+            {"lang", {"Language / Язык", "Язык / Language"}},
+            {"lang_auto", {"Automatic (system)", "Автоматически (как в системе)"}},
         };
         auto it = t.find(key);
         return it == t.end() ? key : (g_ru ? it->second.second : it->second.first);
@@ -365,6 +385,21 @@ namespace
         if (ImGui::Button(tr("desktop")))
             install_desktop_entry();
         ImGui::TextDisabled("%s", data_dir().c_str());
+        ImGui::Separator();
+        // the language names stay in their own language, so the switch is readable in either UI
+        static const char *const codes[] = {"auto", "en", "ru"};
+        const char *names[] = {tr("lang_auto"), "English", g_cyrillic ? "Русский" : "Russian (no Cyrillic font)"};
+        int cur = 0;
+        for (int i = 0; i < 3; ++i)
+            if (a.cfg.lang == codes[i])
+                cur = i;
+        ImGui::SetNextItemWidth(260);
+        if (ImGui::Combo(tr("lang"), &cur, names, 3))
+        {
+            a.cfg.lang = codes[cur];
+            save_config(a.cfg);
+            apply_lang(a.cfg.lang);
+        }
     }
 } // namespace
 
@@ -438,6 +473,7 @@ int main(int argc, char **argv)
     const float scale = SDL_GetWindowDisplayScale(window) > 0 ? SDL_GetWindowDisplayScale(window) : 1.f;
     bool cyrillic = false;
     const std::string font = find_font(cyrillic);
+    g_cyrillic = cyrillic;
     if (font.empty())
     {
         fprintf(stderr, "no TrueType font found (install fonts-dejavu or noto-fonts)\n");
@@ -447,8 +483,6 @@ int main(int argc, char **argv)
         static const ImWchar ranges[] = {0x0020, 0x00FF, 0x0400, 0x04FF, 0x2010, 0x205E, 0};
         io.Fonts->AddFontFromFileTTF(font.c_str(), 18.f * scale, nullptr, ranges);
         io.Fonts->AddFontFromFileTTF(font.c_str(), 34.f * scale, nullptr, ranges);
-        const char *lang = getenv("LANG");
-        g_ru = cyrillic && (!lang || strncmp(lang, "en", 2) != 0); // Russian unless the system is English
     }
     style();
     ImGui::GetStyle().ScaleAllSizes(scale);
@@ -456,6 +490,7 @@ int main(int argc, char **argv)
     ImGui_ImplSDLRenderer3_Init(renderer);
 
     App app;
+    apply_lang(app.cfg.lang);
     adopt_running_package();
     if (app.cfg.version.empty())
     {

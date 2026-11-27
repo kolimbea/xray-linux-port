@@ -30,6 +30,7 @@ namespace launcher
         std::string profile = "G.A.M.M.A";
         std::string version;     // installed tag to run
         std::string overlay_stamp; // modlist.txt size+mtime when the overlay was built
+        std::string lang = "auto"; // launcher UI language: auto (from LANG), en, ru
     };
 
     // A background job: the worker writes, the UI reads (status/error under the mutex).
