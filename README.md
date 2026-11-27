@@ -8,6 +8,16 @@ the main menu and a full GAMMA level (Bar, from a save) run with NPCs, lighting,
 screenshots, for 20+ minute sessions. Expect missing effects, crashes and settings that have never been
 tried. Other GPUs and drivers have not been tested in the game.
 
+## Install (players)
+
+Download the AppImage, .deb, tar.gz or Flatpak from
+[Releases](https://github.com/kolimbea/xray-linux-port/releases) (Arch: AUR `xray-native-bin`), start
+the launcher, point it at your GAMMA folder and press Play. Step by step: [docs/INSTALL.md](docs/INSTALL.md)
+· по-русски: [docs/INSTALL.ru.md](docs/INSTALL.ru.md).
+
+Packages are built with `tools/packaging/` (Debian 13 container, glibc 2.41 baseline, bundled
+libraries): `build_portable.sh`, `make_packages.sh <tag>`, `store_files.sh <tag>`.
+
 ## How it works
 
 - The engine (`xray-monolith` fork, branch `stage-2-vk`) is built with clang on Linux. Its Windows APIs

@@ -22,6 +22,13 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
 - Memory note: "staging textures" reach 7-13 GB of process memory with GAMMA (the engine keeps every
   loaded-but-never-drawn texture as STAGING until its first Apply, dx10SH_Texture.cpp ProcessStaging);
   same engine design as on Windows, but worth an option to drop or compress them.
+- Packaging (2026-11-27): tools/packaging/ builds in a Debian 13 container (glibc 2.41) and makes
+  tar.gz, AppImage, .deb, Flatpak bundle and the AUR PKGBUILD (tools/package.sh <tag> [--publish]).
+  Verified: game renders from the package and from the Flatpak; .deb installs on Ubuntu 25.04, AUR
+  package on Arch. Player guide: docs/INSTALL.md / docs/INSTALL.ru.md. No release published yet.
+- Fixed 2026-11-27: Body Health System flicker (std::sort -> stable_sort of HUD statics), crashes at
+  exit (path cache, freeze watchdog). Sky "moving fast" on Truck Cemetery not reproduced in overcast
+  weather (frames build/shots/skyc.*): need the user's weather/time or a video.
 - Graphics settings matrix (2026-11-27, tools/settings_matrix.sh, 20 variants, GAMMA autotest save):
   all start and render after monolith acb7358. Fixed: HBAO and HDAO shader compile errors, null
   dereference with r2_ssao_blur (upstream), tessellation now disabled on Vulkan with a log line (hull /

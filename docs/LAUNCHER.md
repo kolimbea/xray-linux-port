@@ -3,8 +3,12 @@
 Goal: players install and update the native build without building it. Decided with the user:
 a standalone, good-looking launcher; public releases on GitHub (pre-release while alpha).
 
-## Release package (tools/package.sh)
-`xray-native-<version>-linux-x86_64.tar.zst`:
+## Release package (tools/package.sh -> tools/packaging/)
+Built in a Debian 13 container (glibc 2.41 baseline, `build_portable.sh`); libraries that distributions
+name or version differently are bundled in `lib/` (RUNPATH `$ORIGIN/../lib`), the system keeps glibc,
+libstdc++, the Vulkan loader, display/audio client libraries. Formats made from the same package
+(`make_packages.sh`, `store_files.sh`): tar.gz, AppImage, .deb, Flatpak bundle, AUR `xray-native-bin`.
+`xray-native-<version>-linux-x86_64.tar.gz`:
 ```
 xray-native/
   bin/xray_vk            game (Release, ThinLTO)
@@ -14,9 +18,11 @@ xray-native/
   VERSION
 ```
 Published as a GitHub release of kolimbea/xray-linux-port with a `.sha256` file next to it.
-System libraries stay system ones (SDL3, Vulkan loader, OpenAL, TBB, ICU, OpenSSL, vorbis, theora,
-jpeg, gif): the first releases target current distributions (built on Fedora 44); a Steam Runtime
-container build is the later answer for older ones.
+Verified 2026-11-27: the game from the package and from the Flatpak renders the GAMMA save (GTX 1650 Ti,
+Fedora 44); the .deb installs on Ubuntu 25.04, the AUR package builds and installs on Arch, all
+libraries resolve. Debian's SDL3 links X11/Wayland/PipeWire/Pulse/libdecor/gbm directly, so the .deb
+and PKGBUILD depend on them (every desktop has them). Older distributions (glibc < 2.41) would need a
+Steam Runtime build.
 
 ## Launcher (tools/launcher, C++20, SDL3 + SDL_Renderer + Dear ImGui 1.91.8)
 - No new dependencies for players: SDL3 is already needed by the game; ImGui is compiled in (its SDL3
