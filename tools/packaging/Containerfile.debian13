@@ -1,9 +1,11 @@
 # Build environment of the portable release (tools/packaging/build_portable.sh): Debian 13 "trixie",
 # glibc 2.41, so the binaries run on Debian 13+, Ubuntu 25.04+, Fedora 42+, Arch and their derivatives.
+# libclang-rt-19-dev and llvm-19: profile runtime and llvm-profdata for tools/pgo.sh.
 FROM docker.io/library/debian:trixie
 RUN apt-get update && apt-get install -y --no-install-recommends \
         clang lld cmake ninja-build python3 git curl ca-certificates xz-utils file patchelf \
         libsdl3-dev libtbb-dev libopenal-dev libvorbis-dev libtheora-dev libjpeg62-turbo-dev \
         libicu-dev libssl-dev libgif-dev libvulkan-dev libvulkan-memory-allocator-dev \
         dpkg-dev fakeroot desktop-file-utils binutils \
+        libclang-rt-19-dev llvm-19 \
     && rm -rf /var/lib/apt/lists/*

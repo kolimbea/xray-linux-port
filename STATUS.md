@@ -41,6 +41,13 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
 - AMD (2026-11-28): the renderer runs on the laptop's Radeon Vega 8 (RADV, Mesa 26.2.6, XR_VK_GPU=0)
   with no "! vk" lines; frames match the GTX 1650 Ti side by side (build/shots/amd.*, nv.*). 9 fps at
   1080p high (GPU 111 ms, integrated GPU). Intel still untested.
+- PGO (2026-11-28): tools/pgo.sh builds an instrumented release in the Debian container, trains it on
+  the bench level (fixture script quits the game cleanly so the profile is written), merges
+  build/pgo/release.profdata; tools/packaging/build_portable.sh uses it when present (not in git:
+  run tools/pgo.sh before tools/package.sh). Interleaved headless runs: release with PGO 25.02 /
+  25.19 / 25.27 ms vs v0.1.2 release 27.40 / 27.17 / 27.33 ms (~8 %). Training is one level (Bar);
+  other levels are expected to gain less. Needed fix: CAI_Stalker::agent_manager out of line (ODR).
+  tools/headless.sh = the headless gamescope wrapper for XR_BIN (no window on the desktop).
 - Release vs dev build speed (2026-11-28): no gap. Packaged v0.1.2 binary (Debian clang 19, -O3, lld)
   29.53 / 29.86 ms, dev build (Fedora clang 22, -O2 -g) 29.68 / 27.45 ms, interleaved headless runs.
   The earlier 43.9 ms was a single hot run.
@@ -68,9 +75,9 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   (before: 0.1 / 1.0-1.7 alternating). Any other engine code calling iFloor/iCeil on constants was
   affected too. Interleaved headless benchmark (run_level 4, 2 rounds): fixed 27.04 / 27.13 ms,
   before 27.55 / 28.40 ms per frame (~2 %, close to noise).
-- Headless test wrapper (scratchpad headless.sh pattern): run gamescope under `setsid` plus a watcher
-  that kills the whole session when the wrapper dies; before, gamescopereaper and the game survived
-  run_level's stop and kept the single-instance lock.
+- Headless test wrapper (tools/headless.sh): gamescope under `setsid` plus a watcher that kills the
+  whole session when the wrapper dies; before, gamescopereaper and the game survived run_level's stop
+  and kept the single-instance lock.
 - User-reported bugs (2026-11-27): the player health
   widget in the bottom-left corner (Body Health System, zzz_player_injuries.script): its grey health
   fill (vertical CUIProgressBar "bhs_health", scissor-clipped) is present on some frames and missing on
