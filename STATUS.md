@@ -31,8 +31,15 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   (DXVK-style) to take the ~19 % off the main thread, PGO, MSAA+SSFX, tessellation stages.
 - Input (monolith 4dba8b49): SDL text input only while imgui edits text (tester report: A/S/D do not
   move; suspected input-method capture). Not reproduced here (no IME on this machine); the tester
-  confirmed the fix (2026-11-28). Open: one SIGSEGV in a Lua call of CUIWindow::(bool) from a CPHScriptCondition
-  (crash_1795808520.log), not reproduced in two reruns.
+  confirmed the fix (2026-11-28).
+- Fixed 2026-11-28 (monolith 89e81736): SIGSEGV on resolution change (tester report; also the earlier
+  CUIWindow::(bool) crash from a CPHScriptCondition). Catspaw's Timed Tutorial Prompts attaches windows
+  to ActorMenu.get_maingame() and keeps calling them from level.add_call timers; the HUD reload freed
+  that window (use-after-free, latent on Windows). The old main HUD window is now retired, freed with
+  the game UI. Reproduced with fixture zz_vidmode_test.script (active while appdata/vidmode_test.txt
+  exists): crashed on the 2nd vid_mode in 3/3 runs, now 3 changes and a clean quit. Lua stack found by
+  running the game under gdb and calling luaL_traceback at the fault. Loading screen: the progress bar
+  only moves between load stages (8-18 s each with GAMMA), as in the original engine; left as is.
 - Launcher (root 3d78469): language switch in Settings (auto/English/Russian); auto = Russian only for
   ru/uk/be/kk locales. 2026-11-28: command line for everything the window does (--gamma, --releases,
   --install [tag], --versions, --use, --overlay, --play; tester request "why isn't it just cli").
