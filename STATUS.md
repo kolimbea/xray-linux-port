@@ -55,8 +55,9 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   all start and render after monolith acb7358. Fixed: HBAO and HDAO shader compile errors, null
   dereference with r2_ssao_blur (upstream), tessellation now disabled on Vulkan with a log line (hull /
   domain stages not implemented — open work). Still open: with MSAA the SSFX passes read multisampled
-  targets declared as Texture2D (bound as null: TAA, motion vectors, SSS off under MSAA); "view
-  dimension 8" render target views (Texture2DMS array) unsupported. FPS on GTX 1650 Ti, 1080p high,
+  targets declared as Texture2D (bound as null: TAA, motion vectors, SSS off under MSAA). "View
+  dimension 8" (TEXTURE3D render target views, volumetric smoke) supported since monolith
+  2026-11-28; verified that r3_volumetric_smoke on loads and renders the bench level without errors. FPS on GTX 1650 Ti, 1080p high,
   interior: 24-31.
 - Fixed 2026-11-28 (monolith 7722cec5): the sky "lags" — the cloud layer jumped back and forth with a
   5-frame period. Root cause: xrCore iFloor/iCeil bit tricks shift by negative counts and by >= 32 bits
