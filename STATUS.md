@@ -55,6 +55,16 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   25.19 / 25.27 ms vs v0.1.2 release 27.40 / 27.17 / 27.33 ms (~8 %). Training is one level (Bar);
   other levels are expected to gain less. Needed fix: CAI_Stalker::agent_manager out of line (ODR).
   tools/headless.sh = the headless gamescope wrapper for XR_BIN (no window on the desktop).
+- Main-thread CPU (2026-11-28, perf on the bench level; CPU profiling now via the Fedora perf binary
+  from the xray-perf image run on the host, `perf record -e cycles:u -g --user-callchains` with the
+  game started under it inside tools/headless.sh; build/monolith-fp = frame-pointer build for call
+  stacks). The renderer backend is ~10 % of the main thread (NVIDIA driver ~6 %), so a command-stream
+  worker thread would gain at most ~6-8 %: postponed. Fixed instead: CScriptStorage::object scanned
+  whole Lua namespaces with lua_next+strcmp on every engine->Lua functor lookup (monolith 0ef9e56e,
+  lj_tab_next 4.5 % -> 0 %; old/new lookups compared on 65536 calls, 0 mismatches), and the
+  fast_dynamic_cast cache was MSVC-only (monolith c04c34f4, dynamic_cast 2.2 % -> 1.0 %). Frame-time
+  A/B not done yet (laptop hot, user gaming). Left: strcmp 2.9 % (spread out), Lua GC ~3 %,
+  sun cascades ~10 %, Feel::Vision ray queries ~5 %.
 - Release vs dev build speed (2026-11-28): no gap. Packaged v0.1.2 binary (Debian clang 19, -O3, lld)
   29.53 / 29.86 ms, dev build (Fedora clang 22, -O2 -g) 29.68 / 27.45 ms, interleaved headless runs.
   The earlier 43.9 ms was a single hot run.
