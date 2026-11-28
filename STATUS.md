@@ -38,6 +38,9 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   --install [tag], --versions, --use, --overlay, --play; tester request "why isn't it just cli").
   Tested in a temporary XDG_DATA_HOME: install of three releases, overlay, --play to the main menu
   in headless gamescope.
+- AMD (2026-11-28): the renderer runs on the laptop's Radeon Vega 8 (RADV, Mesa 26.2.6, XR_VK_GPU=0)
+  with no "! vk" lines; frames match the GTX 1650 Ti side by side (build/shots/amd.*, nv.*). 9 fps at
+  1080p high (GPU 111 ms, integrated GPU). Intel still untested.
 - Release vs dev build speed (2026-11-28): no gap. Packaged v0.1.2 binary (Debian clang 19, -O3, lld)
   29.53 / 29.86 ms, dev build (Fedora clang 22, -O2 -g) 29.68 / 27.45 ms, interleaved headless runs.
   The earlier 43.9 ms was a single hot run.
