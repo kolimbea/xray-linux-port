@@ -49,7 +49,19 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   targets declared as Texture2D (bound as null: TAA, motion vectors, SSS off under MSAA); "view
   dimension 8" render target views (Texture2DMS array) unsupported. FPS on GTX 1650 Ti, 1080p high,
   interior: 24-31.
-- User-reported bugs to fix next (2026-11-27): the sky "lags" (stutters/flickers), the player health
+- Fixed 2026-11-28 (monolith 7722cec5): the sky "lags" — the cloud layer jumped back and forth with a
+  5-frame period. Root cause: xrCore iFloor/iCeil bit tricks shift by negative counts and by >= 32 bits
+  (undefined behaviour); clang folds them into garbage for compile-time constants, so the clouds' wind
+  direction (color_rgba of iFloor'd constants, COLOR0 of v_clouds) was a random value per frame. Now
+  floorf/ceilf under GCC/Clang. Verified headless with a still camera (fixture zz_sky_test.script,
+  active while appdata/sky_test.txt names a weather): consecutive-frame sky difference 0.08-0.15
+  (before: 0.1 / 1.0-1.7 alternating). Any other engine code calling iFloor/iCeil on constants was
+  affected too. Interleaved headless benchmark (run_level 4, 2 rounds): fixed 27.04 / 27.13 ms,
+  before 27.55 / 28.40 ms per frame (~2 %, close to noise).
+- Headless test wrapper (scratchpad headless.sh pattern): run gamescope under `setsid` plus a watcher
+  that kills the whole session when the wrapper dies; before, gamescopereaper and the game survived
+  run_level's stop and kept the single-instance lock.
+- User-reported bugs (2026-11-27): the player health
   widget in the bottom-left corner (Body Health System, zzz_player_injuries.script): its grey health
   fill (vertical CUIProgressBar "bhs_health", scissor-clipped) is present on some frames and missing on
   others (build/shots/corners.png); 40 consecutive frames show no flicker. Need the user's description; then test every graphics setting (presets, SSAO modes,
