@@ -9,6 +9,7 @@
 #include "imgui_impl_sdlrenderer3.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <functional>
 #include <mutex>
@@ -413,10 +414,67 @@ namespace
     }
 } // namespace
 
-// Command line without a window (tests, scripts): --gamma <folder>, --overlay, --releases.
+// Runs a worker on a thread and prints its status, and the progress or the downloaded size, once a
+// second on stderr (a terminal without the window: SSH, minimal desktops).
+static bool run_task(Task &task, const std::function<void()> &job)
+{
+    task.running = true;
+    std::thread t(job);
+    std::string last, last_status;
+    while (task.running)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::string line;
+        bool downloading = false;
+        {
+            std::lock_guard<std::mutex> g(task.lock);
+            line = last_status = task.status;
+            if (!task.download_path.empty())
+            {
+                downloading = true;
+                std::error_code ec;
+                const uint64_t got = fs::file_size(task.download_path, ec);
+                if (!ec)
+                    line += " " + std::to_string(got >> 20) + (task.download_size ? "/" + std::to_string(task.download_size >> 20) : "") + " MB";
+            }
+        }
+        if (!downloading && task.progress > 0.f) // the download reports its size instead
+            line += " " + std::to_string(int(task.progress * 100.f)) + " %";
+        if (line != last)
+            fprintf(stderr, "%s\n", line.c_str()), last = line;
+    }
+    t.join();
+    std::lock_guard<std::mutex> g(task.lock);
+    if (!task.ok)
+        fprintf(stderr, "%s\n", task.error.empty() ? task.status.c_str() : task.error.c_str());
+    else if (task.status != last_status) // finished between two polls
+        fprintf(stderr, "%s\n", task.status.c_str());
+    return task.ok;
+}
+
+static const char kUsage[] =
+    "usage: %s [options]   (no options: the window)\n"
+    "  --gamma <folder>    find Anomaly and the GAMMA (Mod Organizer 2) folder from <folder>;\n"
+    "                      repeat with the other folder if they are apart\n"
+    "  --releases          list the published versions\n"
+    "  --install [tag]     download and install a version (default: the newest)\n"
+    "  --versions          list the installed versions (* = the one --play runs)\n"
+    "  --use <tag>         run this installed version from now on\n"
+    "  --overlay           rebuild the GAMMA mod overlay\n"
+    "  --play              start the game (rebuilds the overlay first when the mod list changed)\n"
+    "Options run in the order given, e.g. --gamma ~/Games/gamma --install --play\n";
+
+// Command line without a window (SSH, scripts, tests).
 static int command_line(int argc, char **argv)
 {
     Config cfg = load_config();
+    adopt_running_package();
+    if (cfg.version.empty())
+    {
+        const auto v = installed_versions();
+        if (!v.empty())
+            cfg.version = v.front(), save_config(cfg);
+    }
     for (int i = 1; i < argc; ++i)
     {
         const std::string a = argv[i];
@@ -433,27 +491,75 @@ static int command_line(int argc, char **argv)
         else if (a == "--overlay")
         {
             Task task;
-            task.running = true;
-            build_overlay(task, cfg);
-            printf("%s\n", task.status.c_str());
-            if (!task.ok)
+            if (!run_task(task, [&] { build_overlay(task, cfg); }))
                 return 1;
         }
-        else if (a == "--releases")
+        else if (a == "--releases" || a == "--install")
         {
             Task task;
             std::vector<Release> rel;
-            task.running = true;
-            fetch_releases(task, rel);
-            if (!task.ok)
-                return fprintf(stderr, "%s\n", task.error.c_str()), 1;
+            if (!run_task(task, [&] { fetch_releases(task, rel); }))
+                return 1;
+            if (a == "--releases")
+            {
+                for (const Release &r : rel)
+                    printf("%s  %s  %s  %.0f MB\n", r.tag.c_str(), r.published.c_str(), r.asset_name.c_str(), double(r.size) / 1048576.0);
+                if (rel.empty())
+                    printf("no releases\n");
+                continue;
+            }
+            const std::string want = i + 1 < argc && argv[i + 1][0] != '-' ? argv[++i] : "";
+            const Release *pick = nullptr;
             for (const Release &r : rel)
-                printf("%s  %s  %s  %.0f MB\n", r.tag.c_str(), r.published.c_str(), r.asset_name.c_str(), double(r.size) / 1048576.0);
-            if (rel.empty())
-                printf("no releases\n");
+                if (want.empty() ? (!pick || version_newer(r.tag, pick->tag)) : r.tag == want)
+                    pick = &r;
+            if (!pick)
+                return fprintf(stderr, want.empty() ? "no releases\n" : "no release %s\n", want.c_str()), 1;
+            Task inst;
+            if (!run_task(inst, [&, r = *pick] { install_release(inst, r, cfg); }))
+                return 1;
+        }
+        else if (a == "--versions")
+        {
+            const auto v = installed_versions();
+            for (const std::string &t : v)
+                printf("%s %s\n", t == cfg.version ? "*" : " ", t.c_str());
+            if (v.empty())
+                printf("none installed\n");
+        }
+        else if (a == "--use" && i + 1 < argc)
+        {
+            const std::string tag = argv[++i];
+            const auto v = installed_versions();
+            if (std::find(v.begin(), v.end(), tag) == v.end())
+                return fprintf(stderr, "%s is not installed (--versions lists them)\n", tag.c_str()), 1;
+            cfg.version = tag;
+            save_config(cfg);
+        }
+        else if (a == "--play")
+        {
+            if (cfg.version.empty())
+                return fprintf(stderr, "no version installed: --install first\n"), 1;
+            if (cfg.anomaly_dir.empty() || cfg.mo2_dir.empty())
+                return fprintf(stderr, "GAMMA/Anomaly folders not set: --gamma <folder> first\n"), 1;
+            if (overlay_needed(cfg))
+            {
+                Task task;
+                if (!run_task(task, [&] { build_overlay(task, cfg); }))
+                    return 1;
+            }
+            const int64_t started = int64_t(time(nullptr));
+            fprintf(stderr, "starting %s\n", cfg.version.c_str());
+            const int status = run_game(cfg);
+            if (status != 0)
+            {
+                const std::string report = crash_report_since(started);
+                fprintf(stderr, "game exit status %d\n%s", status, report.c_str());
+                return 1;
+            }
         }
         else
-            return fprintf(stderr, "usage: %s [--gamma <folder>] [--overlay] [--releases]\n", argv[0]), 2;
+            return fprintf(a == "--help" || a == "-h" ? stdout : stderr, kUsage, argv[0]), a == "--help" || a == "-h" ? 0 : 2;
     }
     return 0;
 }

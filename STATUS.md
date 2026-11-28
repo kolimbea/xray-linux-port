@@ -34,7 +34,13 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   tester's confirmation. Open: one SIGSEGV in a Lua call of CUIWindow::(bool) from a CPHScriptCondition
   (crash_1795808520.log), not reproduced in two reruns.
 - Launcher (root 3d78469): language switch in Settings (auto/English/Russian); auto = Russian only for
-  ru/uk/be/kk locales.
+  ru/uk/be/kk locales. 2026-11-28: command line for everything the window does (--gamma, --releases,
+  --install [tag], --versions, --use, --overlay, --play; tester request "why isn't it just cli").
+  Tested in a temporary XDG_DATA_HOME: install of three releases, overlay, --play to the main menu
+  in headless gamescope.
+- Release vs dev build speed (2026-11-28): no gap. Packaged v0.1.2 binary (Debian clang 19, -O3, lld)
+  29.53 / 29.86 ms, dev build (Fedora clang 22, -O2 -g) 29.68 / 27.45 ms, interleaved headless runs.
+  The earlier 43.9 ms was a single hot run.
 - Packaging (2026-11-27): tools/packaging/ builds in a Debian 13 container (glibc 2.41) and makes
   tar.gz, AppImage, .deb, Flatpak bundle and the AUR PKGBUILD (tools/package.sh <tag> [--publish]).
   Verified: game renders from the package and from the Flatpak; .deb installs on Ubuntu 25.04, AUR

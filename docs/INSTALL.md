@@ -33,6 +33,16 @@ The Flatpak sees home, `/mnt`, `/media` and `/run/media` read-only; its data is 
 The launcher checks GitHub releases. **Updates** shows the changelog, installs (download, sha256 check,
 unpack) and rolls back to the previous version, which is kept.
 
+## Without the window (terminal)
+Everything the window does is also available on the command line; options run in the order given:
+
+```
+xray-launcher --gamma ~/Games/gamma --install --play
+```
+
+`--gamma <folder>` (repeat with the second folder if GAMMA and Anomaly are apart), `--releases`,
+`--install [tag]` (default: newest), `--versions`, `--use <tag>`, `--overlay`, `--play`, `--help`.
+
 ## Files
 | What | Where |
 |---|---|
