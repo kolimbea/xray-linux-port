@@ -30,8 +30,8 @@ Log: [docs/PROGRESS.md](docs/PROGRESS.md) · Technical audit and roadmap (2026-1
   descriptors and a per-context program cache: ~1 %. Next candidates: a command-stream worker thread
   (DXVK-style) to take the ~19 % off the main thread, PGO, MSAA+SSFX, tessellation stages.
 - Input (monolith 4dba8b49): SDL text input only while imgui edits text (tester report: A/S/D do not
-  move; suspected input-method capture). Not reproduced here (no IME on this machine): needs the
-  tester's confirmation. Open: one SIGSEGV in a Lua call of CUIWindow::(bool) from a CPHScriptCondition
+  move; suspected input-method capture). Not reproduced here (no IME on this machine); the tester
+  confirmed the fix (2026-11-28). Open: one SIGSEGV in a Lua call of CUIWindow::(bool) from a CPHScriptCondition
   (crash_1795808520.log), not reproduced in two reruns.
 - Launcher (root 3d78469): language switch in Settings (auto/English/Russian); auto = Russian only for
   ru/uk/be/kk locales. 2026-11-28: command line for everything the window does (--gamma, --releases,
